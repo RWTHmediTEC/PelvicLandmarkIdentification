@@ -1,5 +1,5 @@
 clearvars
-% close all
+close all
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
@@ -30,7 +30,5 @@ for p=2%1:length(DB)
     
     % Already detected landmarks
     ASIS = Info.ClinicalLandmarks.ASIS;
-    
     ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, 'vis', true);
-%     ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, findobj('type', 'figure'), 'vis', true);
 end
