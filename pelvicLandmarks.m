@@ -42,7 +42,7 @@ parse(parser,varargin{:});
 visu = parser.Results.visualization;
 
 % The pubic symphysis in is the origin of the coordinate system, if the 
-% mesh is transformed into the automatic pelvic coordiante system
+% mesh was transformed into the automatic pelvic coordiante system
 PS = [0, 0, 0];
 
 %% Visualization
