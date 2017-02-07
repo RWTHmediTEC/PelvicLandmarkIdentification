@@ -1,13 +1,19 @@
 clearvars
 close all
 
+[List.f, List.p] = matlab.codetools.requiredFilesAndProducts([mfilename '.m']); List.f = List.f';
+
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
 %% Data
 DB_Path = '..\..\KlinikumDoDatabase\';
 load([DB_Path 'SegmentationDatabase.mat'], 'DB')
 
-for p=2%1:length(DB)
+% Remove some subjects
+rmSubjects={'20500577'};
+DB(ismember({DB.ID},rmSubjects))=[];
+
+for p=6%1:length(DB)
     %% Load data
     load([DB_Path DB(p).ID '.mat']);
     
@@ -30,5 +36,5 @@ for p=2%1:length(DB)
     
     % Already detected landmarks
     ASIS = Info.ClinicalLandmarks.ASIS;
-    ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, 'vis', true);
+    ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, true);
 end
