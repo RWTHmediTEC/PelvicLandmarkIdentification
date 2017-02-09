@@ -1,7 +1,7 @@
 clearvars
 close all
 
-[List.f, List.p] = matlab.codetools.requiredFilesAndProducts([mfilename '.m']); List.f = List.f';
+% [List.f, List.p] = matlab.codetools.requiredFilesAndProducts([mfilename '.m']); List.f = List.f';
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
