@@ -1,4 +1,4 @@
-function [V,F] = concatenateMeshes(varargin)
+function [V,F] = cat_meshes(varargin)
 % CAT_MESHES concatenate many meshes
 %
 % [V,F] = cat_meshes(V1,F1,V2,F2, ...
@@ -73,3 +73,4 @@ for m = 1:NoA/2
 end
 
 end
+

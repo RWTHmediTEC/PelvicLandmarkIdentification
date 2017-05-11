@@ -13,7 +13,7 @@ load([DB_Path 'SegmentationDatabase.mat'], 'DB')
 rmSubjects={'20500577'};
 DB(ismember({DB.ID},rmSubjects))=[];
 
-for p=6%1:length(DB)
+for p=9%1:length(DB)
     %% Load data
     load([DB_Path DB(p).ID '.mat']);
     
@@ -23,10 +23,8 @@ for p=6%1:length(DB)
     
     % Construct the pelvic bone
     if isequal(Info.NoB, 1:5)
-        [pelvis.vertices, pelvis.faces] = concatenateMeshes(...
-            Bone(3).MeshAPCS.vertices,Bone(3).MeshAPCS.faces,...
-            Bone(4).MeshAPCS.vertices,Bone(4).MeshAPCS.faces,...
-            Bone(5).MeshAPCS.vertices,Bone(5).MeshAPCS.faces);
+        [pelvis.vertices, pelvis.faces] = cat_meshes(...
+            Bone(3).MeshAPCS,Bone(4).MeshAPCS,Bone(5).MeshAPCS);
     elseif isequal(Info.NoB, [1 2 6])
         pelvis.vertices = Bone(6).MeshAPCS.vertices;
         pelvis.faces = Bone(6).MeshAPCS.faces;
