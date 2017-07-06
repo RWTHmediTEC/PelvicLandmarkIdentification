@@ -4,9 +4,14 @@ function ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, varargin)
 % REQUIRED INPUT:
 %   pelvis: A mesh of the pelvis (hip bones and sacrum) consisting of one
 %       component with the fields: pelvis.vertices, pelvis.faces
-%       ATTENTION: The mesh has to be transformed into the automatic pelvic
+%       ATTENTION: 
+%       - The mesh has to be transformed into the automatic pelvic
 %       coordiante system [Kai 2014]. Use the function: automaticPelvicCS.m
+%       - The mesh has to be clean and smooth. Use a Taubin Smoothing, for 
+%       example (lambda = 0.7, mu = -0.67, steps = 200). See the function: 
+%       optimizeMesh.m
 %   ASIS = Anterior Superior Iliac Spines: 2x3 matrix with xyz-coordinates
+%
 % OPTIONAL INPUT:
 %   visualization: true (default) or false
 % 
@@ -16,6 +21,7 @@ function ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, varargin)
 %   IschialSpine: 2x3 matrix with xyz-ccordinates
 %   SacralPlateau: 1x9 matrix of a plane. SP(1:3) is the centroid
 %       of the sacral plateau. SP(4:9) are two vectors spanning the plane
+%   SacralPromontory: 1x3 vector with xyz-ccordinates
 %
 % REFERENCES:
 %   2011 - Beniere et al. - Recovering Primitives in 3D CAD meshes 
