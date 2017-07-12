@@ -53,8 +53,8 @@ pelvis = p.Results.pelvis;
 pelvisProps = inertiaInfo(pelvis);
 
 % Transform the vertices into the temporary inertia coordinate system
-pelvisInertia.vertices = transformPointsInverse(...
-    affine3d(pelvisProps.inverseInertiaTFM'), pelvis.vertices);
+pelvisInertia.vertices = transformPoint3d(pelvis.vertices, ...
+    inv(pelvisProps.inverseInertiaTFM));
 pelvisInertia.faces = pelvis.faces;
 
 % Define the the maximal width of the pelvis (PW) as connection between the 
@@ -130,9 +130,9 @@ transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
 
 % Cut the mesh in four quadrants by the two planes
 [rightMesh, ~, leftMesh] = cutMeshByPlane(pelvisInertia, sagittalPlane);
-[quadrant(1), ~, ~] = cutMeshByPlane(leftMesh, transversePDPlane);
-[quadrant(2), ~, ~] = cutMeshByPlane(rightMesh, transversePDPlane);
-[~, ~, tempMesh] = cutMeshByPlane(pelvisInertia, transversePDPlane);
+quadrant(1) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','above');
+quadrant(2) = cutMeshByPlane(rightMesh, transversePDPlane, 'part','above');
+tempMesh = cutMeshByPlane(pelvisInertia, transversePDPlane, 'part','below');
 tempMeshes = splitFV(tempMesh);
 % Use only the two biggest components of the distal part
 [~,sortingIndices] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
