@@ -32,6 +32,7 @@ function [fwTFMinput2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %       Pelvis, femur, and tibia [Kai 2014]
 %
 % TODO:
+%   - Check if the "face orientation" sanity checks are correct
 %   - Additional sanity checks may be added
 %   - Check if faces are oriented outwards
 %
@@ -90,7 +91,7 @@ elseif abs(pelvisInertia.vertices(MPPIdx,1)) > 1/4*PW
     % If the x-distance of the most posterior point is greater than 1/4 of
     % the pelvic width the temporary coordinate system is rotated by 180°
     % around the y-axis
-    warning('This transformation orients the faces inwards')
+%     warning('This transformation orients the faces inwards')
     TFM180 = [[-1 0 0 0]; [0 1 0 0]; [0 0 -1 0];  [0 0 0 1]];
     pelvisProps.inverseInertiaTFM = pelvisProps.inverseInertiaTFM*TFM180;
     
@@ -221,7 +222,9 @@ view(90,0)
 
 % Coordinate system
 Q.C = [1 0 0; 0 1 0; 0 0 1];
-QDScaling = 0.1 * distancePoints3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:));
+scalingFactor = distancePoints3d(pelvisInertia.vertices(PWminIdx,:),...
+    pelvisInertia.vertices(PWmaxIdx,:));
+QDScaling = 0.1 * scalingFactor;
 Q.P = repmat([0, 0, 0], 3, 1);
 Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
 [~] = quiver3D(Q.P, Q.D, Q.C);
@@ -229,7 +232,7 @@ Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
 % Patch properties
 patchProps.EdgeColor = 'none';
 patchProps.FaceColor = [0.75 0.75 0.75];
-patchProps.FaceAlpha = 0.75;
+patchProps.FaceAlpha = 1;
 patchProps.EdgeLighting = 'gouraud';
 patchProps.FaceLighting = 'gouraud';
 
@@ -245,7 +248,11 @@ patchProps.EdgeColor = 'k';
 APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
 APPPatch.faces = [1 2 3];
 patch(APPPatch, patchProps)
-    
+
+% normals=faceNormal(pelvisAPCS.vertices,pelvisAPCS.faces);
+% centroids=faceCentroids(pelvisAPCS.vertices,pelvisAPCS.faces);
+% drawVector3d(centroids, normals*0.01*scalingFactor);
+
 end
 
 end
