@@ -231,7 +231,7 @@ Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
 
 % Patch properties
 patchProps.EdgeColor = 'none';
-patchProps.FaceColor = [0.75 0.75 0.75];
+patchProps.FaceColor = [223, 206, 161]/255;
 patchProps.FaceAlpha = 1;
 patchProps.EdgeLighting = 'gouraud';
 patchProps.FaceLighting = 'gouraud';
@@ -244,6 +244,7 @@ patchProps.Marker = 'o';
 patchProps.MarkerEdgeColor = 'y';
 patchProps.MarkerFaceColor = 'y';
 patchProps.FaceColor = 'y';
+patchProps.FaceAlpha = 0.75;
 patchProps.EdgeColor = 'k';
 APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
 APPPatch.faces = [1 2 3];
