@@ -52,68 +52,18 @@ visu = parser.Results.visualization;
 PS = [0, 0, 0];
 
 %% Visualization
-if visu == true
-    patchProps.EdgeColor = 'none';
-    patchProps.FaceColor = [0.75 0.75 0.75];
-    patchProps.FaceAlpha = 0.5;
-    patchProps.EdgeLighting = 'gouraud';
-    patchProps.FaceLighting = 'gouraud';
-    
-    % New figure
-    Color = [1 1 1];
-    MonitorsPos = get(0,'MonitorPositions');
-    FigHandle = figure(...
-        'Units','pixels',...
-        'renderer','opengl', ...
-        'Color', Color,...
-        'ToolBar','figure',...
-        'WindowScrollWheelFcn',@M_CB_Zoom,...
-        'WindowButtonDownFcn',@M_CB_RotateWithLeftMouse);
-    if     size(MonitorsPos,1) == 1
-        set(FigHandle,'OuterPosition',MonitorsPos(1,:));
-    elseif size(MonitorsPos,1) == 2
-        set(FigHandle,'OuterPosition',MonitorsPos(2,:));
-    end
-    
-    % GUI
-    % uicontrol Button Size
-    BSX = 0.1; BSY = 0.023;
-    
-    %Font properies
-    FontPropsA.FontUnits = 'normalized';
-    FontPropsA.FontSize = 0.8;
-    % Rotate-buttons
-    uicontrol('Units','normalized','Position',[0.5-BSX*3/2     0.01 BSX BSY],FontPropsA,...
-        'String','Left','Callback','view(-90,0)');
-    uicontrol('Units','normalized','Position',[0.5-BSX*3/2 0.01+BSY BSX BSY],FontPropsA,...
-        'String','Right','Callback','view(90,0)');
-    uicontrol('Units','normalized','Position',[0.5-BSX*1/2     0.01 BSX BSY],FontPropsA,...
-        'String','Back','Callback','view(0,0)');
-    uicontrol('Units','normalized','Position',[0.5-BSX*1/2 0.01+BSY BSX BSY],FontPropsA,...
-        'String','Front','Callback','view(180,0)');
-    uicontrol('Units','normalized','Position',[0.5+BSX*1/2     0.01 BSX BSY],FontPropsA,...
-        'String','Bottom','Callback','view(0,-90)');
-    uicontrol('Units','normalized','Position',[0.5+BSX*1/2 0.01+BSY BSX BSY],FontPropsA,...
-        'String','Top','Callback','view(0,90)');
-    
-    % Axes
-    hold on
-    axis on equal tight
-    xlabel X; ylabel Y; zlabel Z;
-    cameratoolbar('SetCoordSys','none')
-    H_Light(1) = light; light('Position', -1*(get(H_Light(1),'Position')));
-    view(0,0)
-    
-    % Surface of the pelvis in grey
-    patch(pelvis, patchProps)
+if visu
+    % Surface of the pelvis
+    meshHandle = visualizeMeshes(pelvis);
+    set(meshHandle,'FaceAlpha',0.5)
     
     % Point properties
     pointProps.Linestyle = 'none';
     pointProps.Marker = 'o';
-    
-    % Anterior superior iliac spine (ASIS)
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
+    
+    % Anterior superior iliac spine (ASIS)
     drawPoint3d(ASIS, pointProps)
     text(ASIS(:,1), ASIS(:,2), ASIS(:,3), 'ASIS','FontWeight','bold',...
         'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
@@ -136,6 +86,10 @@ AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, visu);
 
 % Sacral plane (SP) detection
 [SP, SacralPromontory] = sacralPlateau(pelvis, ASIS, PSIS, visu);
+
+if visu
+    viewButtonsRAS
+end
 
 %% Output: The Landmarks
 ClinicalLandmarks.PS = PS;

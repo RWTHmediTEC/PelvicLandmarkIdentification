@@ -13,13 +13,13 @@ APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane
 % Transverse plane to keep only the distal part of the pelvis
 DIST_CUTTING_FACTOR = 0.4;
 distTransversePlane = [0 0 DIST_CUTTING_FACTOR*APPheight(3) 1 0 0 0 1 0];
-[~, ~, tempMesh] = cutMeshByPlane(pelvis, distTransversePlane);
+tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','below');
 
-tempMeshes = splitFV(tempMesh);
+tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
-[~,tempSortingIdx] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
-tempMesh(1)=tempMeshes(tempSortingIdx(1));
-tempMesh(2)=tempMeshes(tempSortingIdx(2));
+% [~,tempSortingIdx] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
+tempMesh(1)=tempMeshes(1);
+tempMesh(2)=tempMeshes(2);
 
 % Distinguish between left and right
 if mean(tempMesh(1).vertices(:,1)) > 0

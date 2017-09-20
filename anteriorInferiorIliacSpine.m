@@ -7,9 +7,9 @@ parse(parser,varargin{:});
 visu = parser.Results.visualization;
 
 % Frontal plane to keep only the anterior part of the mesh
-frontalPlane = [0 mean(IS(:,2)) 0 1 0 0 0 0 1];
+frontalPlane = [0 mean(IS(:,2)) 0 1 0 0 0 0 -1];
 % Cut the pelvis along the frontal plane
-[~, ~, tempMesh] = cutMeshByPlane(pelvis, frontalPlane);
+tempMesh = cutMeshByPlane(pelvis, frontalPlane,'part','above');
 
 % Sagittal plane
 sagittalPlane = [0 0 0 0 1 0 0 0 1];
@@ -64,8 +64,8 @@ for s=1:2
                     distCuttingFactor = distCuttingFactor+0.02;
                     distTransversePlane = [0 0 distCuttingFactor*APPheight(3) 1 0 0 0 1 0];
             end
-            [~, ~, tempMesh] = cutMeshByPlane(tempMesh, proxTransversePlane);
-            [tempMesh, ~, ~] = cutMeshByPlane(tempMesh, distTransversePlane);
+            tempMesh = cutMeshByPlane(tempMesh, proxTransversePlane,'part','below');
+            tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
             % Get the indices of the boundary vertices
             tempBoundary = unique(outline(tempMesh.faces));
             [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));

@@ -15,7 +15,7 @@ while ~isempty(vertex4edge)
     % Faces connected to these vertices
     facesLIdx = ismember(mesh.faces, vertex4edge);
     % Remove the faces from the mesh
-    mesh = cutFacesOffMesh(mesh, (sum(facesLIdx, 2) == 0));
+    mesh = removeMeshFaces(mesh, ~(sum(facesLIdx, 2) == 0));
 end
 
 newMesh = splitFV(mesh);

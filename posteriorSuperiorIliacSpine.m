@@ -17,8 +17,8 @@ symPlaneNormal = planeNormal(symPlane);
 if symPlaneNormal(1)<0
     symPlane(:, 7:9) = -symPlane(:, 7:9);
 end
-[proxPelvis(1), ~, ~] = cutMeshByPlane(proxPelvis(1), parallelPlane(symPlane,  10));
-[~, ~, proxPelvis(2)] = cutMeshByPlane(proxPelvis(2), parallelPlane(symPlane, -10));
+proxPelvis(1) = cutMeshByPlane(proxPelvis(1), parallelPlane(symPlane,  10),'part','above');
+proxPelvis(2) = cutMeshByPlane(proxPelvis(2), parallelPlane(symPlane, -10),'part','below');
 
 % % For Debugging
 % if visu == true

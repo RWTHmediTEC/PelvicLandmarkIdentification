@@ -1,28 +1,23 @@
-function [V,F] = cat_meshes(varargin)
-% CAT_MESHES concatenate many meshes
+function varargout = concatenateMeshes(varargin)
+% CONCATENATEMESHES concatenates multiple meshes
 %
-% [V,F] = cat_meshes(V1,F1,V2,F2, ...
+%   [V,F] = concatenateMeshes(V1,F1,V2,F2, ...)
+%   Returns one mesh represented by vertices V and faces F by concatenating
+%   the meshes defined by V1, V2, ... and F1, F2, ...
 %
-% [V,F] = cat_meshes(fvStruct1, ...)
+%   [V,F] = concatenateMeshes(MESH1, MESH2, ...)
+%   where MESH1, MESH2, ... are structs or struct arrays with the fields  
+%   vertices and faces
 %
-% Inputs:
-%   V1  #V by dim list of vertex positions of mesh 1
-%   F1  #F by simplex-size list of simplex indices of mesh 1
-%   V2  #V by dim list of vertex positions of mesh 2
-%   F2  #F by simplex-size list of simplex indices of mesh 2
-%   ...
+%   See also
+%     splitMesh
 %   
-%   fvStruct a struct (array) with the fields vertices and faces, e.g.:
-%   fvStruct1(1).vertices = V1; fvStruct1(1).faces = F1;
-%   fvStruct1(2).vertices = V2; fvStruct1(2).faces = F2;
-%   fvStruct2(1).vertices = V3; fvStruct2(1).faces = F3;
-%   ...
-%   
-% Outputs:
-%   V  #V1+#V2+... by dim list of vertex positions
-%   F  #F1+#F2+... by simplex-size list of simplex indices
-%
+% ---------
+% Authors: oqilipo (parsing), Alec Jacobson (loop)
+% Created: 2017-09-12
+% Copyright 2017
 
+%% parsing inputs
 assert(~isempty(varargin))
 
 if isstruct(varargin{1})
@@ -61,16 +56,32 @@ cellfun(@(x) validateattributes(x, {'numeric'},...
     {'size',[NaN,3],'finite'}), varargin(1:2:end))
 cellfun(@(x) validateattributes(x, {'numeric'},...
     {'integer'}), varargin(2:2:end))
+% Check if all faces have the same number of columns
+errorFacesRows='The faces of all meshes must have the same number of columns';
+assert(numel(unique(cellfun(@(x) size(x,2), varargin(2:2:end))))==1, errorFacesRows)
 
-V=[];
-F=[];
 
+%% loop
+v=[];
+f=[];
 for m = 1:NoA/2
-    Vm = varargin{2*m-1};
-    Fm = varargin{2*m};
-    F = [F; Fm+size(V,1)];
-    V = [V; Vm];
+    vm = varargin{2*m-1};
+    fm = varargin{2*m};
+    f = [f; fm+size(v,1)]; %#ok<AGROW>
+    v = [v; vm]; %#ok<AGROW>
 end
 
+
+%% parsing outputs
+[v, f] = trimMesh(v, f);
+
+switch nargout
+    case 1
+        mesh.vertices=v;
+        mesh.faces=f;
+        varargout{1}=mesh;
+    case 2
+        varargout{1}=v;
+        varargout{2}=f;
 end
 

@@ -26,7 +26,7 @@ APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane
 % Keep the part of the mesh above the ASIS points
 DIST_CUTTING_FACTOR = 0.9;
 distTransversePlane = [0 0 DIST_CUTTING_FACTOR*APPheight(3) 1 0 0 0 1 0];
-[tempMesh, ~, ~] = cutMeshByPlane(pelvis, distTransversePlane);
+tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','above');
 
 % Sacral Promontory (SaPro)
 % The SaPro has to be on the rim of the sacral plateau. While the SaPro is 
@@ -48,8 +48,8 @@ while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
             leftSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     end
     cuttingFactor = cuttingFactor-0.1;
-    [~, ~, tempMesh] = cutMeshByPlane(tempMesh, rightSagittalPlane);
-    [tempMesh, ~, ~] = cutMeshByPlane(tempMesh, leftSagittalPlane);
+    tempMesh = cutMeshByPlane(tempMesh, rightSagittalPlane,'part','below');
+    tempMesh = cutMeshByPlane(tempMesh, leftSagittalPlane,'part','above');
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
@@ -71,7 +71,7 @@ end
 % Keep the part of the temporary mesh above the SaPro
 SacralPromontory = tempMesh.vertices(SaProIdx,:);
 distTransversePlane = [0 0 tempMesh.vertices(SaProIdx,3) 1 0 0 0 1 0];
-[tempMesh, ~, ~] = cutMeshByPlane(tempMesh, distTransversePlane);
+tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
 if visu == true
     pointProps.MarkerEdgeColor = 'k';
@@ -104,7 +104,7 @@ while curvatureThreshold > 0.06 && endCriteria>2
     % Faces with all three vertices part of flats
     flatsFacesIdx = sum(flatsVerticesIdx(tempMesh.faces), 2) == 3;
     % Split the flats into single components
-    flatsMesh = splitFV(cutFacesOffMesh(tempMesh, flatsFacesIdx));
+    flatsMesh = splitMesh(removeMeshFaces(tempMesh, ~flatsFacesIdx));
     % Remove one vertex connections (1 vertex with 4 boundary edges)
     flatsMesh = cell2mat(arrayfun(@vertex4BoundEdgeRemover, flatsMesh, 'UniformOutput', false));
    
@@ -164,11 +164,11 @@ while curvatureThreshold > 0.06 && endCriteria>2
         flatsCenSaProDist = flatsCenSaProDist(minDistIdx);
         % Construct the sacral plane
         SP = fitPlane(flatsMesh.vertices);
-        % Fit an ellipse to the sacral plateau and caluclate a/b
-        [fittedEllipse, ~, d, ~] = ...
-            fitEllipse3d(flatsMesh.vertices(unique(outline(flatsMesh.faces)),:), 'vis', false);
+        % Fit an ellipse to the sacral plateau and calculate a/b
+        fittedEllipse = fitEllipse3d(...
+            flatsMesh.vertices(unique(outline(flatsMesh.faces)),:),'visu',false);
         % a/b of the fitted ellipse 
-        endCriteria=fittedEllipse(3)/fittedEllipse(4);
+        endCriteria=fittedEllipse(4)/fittedEllipse(5);
     end
     
     % Reduce the curvature threshold:

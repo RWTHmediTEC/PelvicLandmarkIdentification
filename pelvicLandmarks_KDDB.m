@@ -1,7 +1,7 @@
-clearvars
-close all
+clearvars; close all; opengl hardware
 
-% [List.f, List.p] = matlab.codetools.requiredFilesAndProducts([mfilename '.m']); List.f = List.f';
+% [List.f, List.p] = matlab.codetools.requiredFilesAndProducts([mfilename '.m']); 
+% List.f = List.f'; List.p = List.p';
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
@@ -23,11 +23,9 @@ for p=9%1:length(DB)
     
     % Construct the pelvic bone
     if isequal(Info.NoB, 1:5)
-        [pelvis.vertices, pelvis.faces] = cat_meshes(...
-            Bone(3).MeshAPCS,Bone(4).MeshAPCS,Bone(5).MeshAPCS);
+        pelvis = concatenateMeshes([Bone(3:5).MeshAPCS]);
     elseif isequal(Info.NoB, [1 2 6])
-        pelvis.vertices = Bone(6).MeshAPCS.vertices;
-        pelvis.faces = Bone(6).MeshAPCS.faces;
+        pelvis = Bone(6).MeshAPCS;
     else
         error('No pelvic bone')
     end
