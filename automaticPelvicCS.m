@@ -54,9 +54,7 @@ pelvis = p.Results.pelvis;
 pelvisProps = inertiaInfo(pelvis);
 
 % Transform the vertices into the temporary inertia coordinate system
-pelvisInertia.vertices = transformPoint3d(pelvis.vertices, ...
-    inv(pelvisProps.inverseInertiaTFM));
-pelvisInertia.faces = pelvis.faces;
+pelvisInertia = transformPoint3d(pelvis, inv(pelvisProps.inverseInertiaTFM));
 
 % Define the the maximal width of the pelvis (PW) as connection between the 
 % most lateral points of both sides
@@ -134,11 +132,11 @@ transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
 quadrant(1) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','above');
 quadrant(2) = cutMeshByPlane(rightMesh, transversePDPlane, 'part','above');
 tempMesh = cutMeshByPlane(pelvisInertia, transversePDPlane, 'part','below');
-tempMeshes = splitFV(tempMesh);
+tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
-[~,sortingIndices] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
-quadrant(3)=tempMeshes(sortingIndices(1));
-quadrant(4)=tempMeshes(sortingIndices(2));
+% [~,sortingIndices] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
+quadrant(3)=tempMeshes(1);
+quadrant(4)=tempMeshes(2);
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
 % vanishes and converges to: tempRot == eye(3). Not described in [Kai 2014]
