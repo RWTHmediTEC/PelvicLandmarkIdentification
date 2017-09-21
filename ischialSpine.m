@@ -17,7 +17,6 @@ tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','below');
 
 tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
-% [~,tempSortingIdx] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
 tempMesh(1)=tempMeshes(1);
 tempMesh(2)=tempMeshes(2);
 

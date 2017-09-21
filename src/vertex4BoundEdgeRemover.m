@@ -18,6 +18,6 @@ while ~isempty(vertex4edge)
     mesh = removeMeshFaces(mesh, ~(sum(facesLIdx, 2) == 0));
 end
 
-newMesh = splitFV(mesh);
+newMesh = splitMesh(mesh);
 
 end
