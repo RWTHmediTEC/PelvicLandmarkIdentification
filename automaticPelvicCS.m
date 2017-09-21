@@ -259,7 +259,7 @@ end
 function props = inertiaInfo(Mesh)
 
 % Get Volume (V), Center of Mass (CoM), Inertia Tensor (J) of the Bone
-[props.V, props.CoM, props.J] = VolumeIntegrate(Mesh.vertices, Mesh.faces);
+[props.V, props.CoM, props.J] = volumeIntegrate(Mesh.vertices, Mesh.faces);
 
 % Get Principal Axes (pAxes) & Principal Moments of Inertia (Jii)
 [props.pAxes, props.Jii] = eig(props.J); % Sign of the Eigenvectors can change (In agreement with their general definition)
