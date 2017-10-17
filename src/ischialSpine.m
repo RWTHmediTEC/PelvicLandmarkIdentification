@@ -20,13 +20,13 @@ tempMeshes = flipud(splitMesh(tempMesh));
 tempMesh(1)=tempMeshes(1);
 tempMesh(2)=tempMeshes(2);
 
-% Distinguish between left and right
+% Distinguish between left (1) and right (2)
 if mean(tempMesh(1).vertices(:,1)) > 0
-    distPelvis(1) = tempMesh(1);
-    distPelvis(2) = tempMesh(2);
-else
     distPelvis(1) = tempMesh(2);
     distPelvis(2) = tempMesh(1);
+else
+    distPelvis(1) = tempMesh(1);
+    distPelvis(2) = tempMesh(2);
 end
 
 % % For Debugging

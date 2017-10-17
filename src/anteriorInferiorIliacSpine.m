@@ -14,7 +14,7 @@ tempMesh = cutMeshByPlane(pelvis, frontalPlane,'part','above');
 % Sagittal plane
 sagittalPlane = [0 0 0 0 1 0 0 0 1];
 % Cut the new mesh along the sagittal plane
-[AIISmesh(1), ~, AIISmesh(2)] = cutMeshByPlane(tempMesh, sagittalPlane);
+[AIISmesh(2), ~, AIISmesh(1)] = cutMeshByPlane(tempMesh, sagittalPlane);
 
 % Height of APP
 APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane);
