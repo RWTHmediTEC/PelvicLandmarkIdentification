@@ -1,4 +1,4 @@
-function ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, varargin)
+function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %PELVICLANDMARKDETECTION detects boney landmarks of the pelvis
 %
 % REQUIRED INPUT:
@@ -51,6 +51,17 @@ visu = parser.Results.visualization;
 % mesh was transformed into the automatic pelvic coordiante system
 PS = [0, 0, 0];
 
+% Check input mesh
+pelvis = splitMesh(pelvis);
+LoP = length(pelvis);
+if LoP == 3
+    xMeans = arrayfun(@(x) mean(x.vertices(:,1)), pelvis);
+    [~, ascIdx]=sort(xMeans);
+    pelvis=pelvis(ascIdx);
+elseif LoP == 2 || LoP > 3
+    error('Invalid number of components in pelvis')
+end
+
 %% Visualization
 if visu
     % Surface of the pelvis
@@ -76,29 +87,49 @@ end
 %% Landmark detection
 
 % Posterior superior iliac spine (PSIS)
-PSIS = posteriorSuperiorIliacSpine(pelvis,visu);
+switch LoP
+    case 1
+        PSIS = posteriorSuperiorIliacSpine1(pelvis,visu);
+    case 3
+        PSIS = posteriorSuperiorIliacSpine3(pelvis,visu);
+end
 
 % Ischial spine (IS) detection
-IS = ischialSpine(pelvis, ASIS, visu);
+switch LoP
+    case 1
+        IS = ischialSpine(pelvis, ASIS, visu);
+    case 3
+        IS = ischialSpine(concatenateMeshes(pelvis([1,3])), ASIS, visu);
+end
 
 % Anterior inferior iliac spine (AIIS) detection
-AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, visu);
+switch LoP
+    case 1
+        AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, visu);
+    case 3
+        AIIS = anteriorInferiorIliacSpine(concatenateMeshes(pelvis([1,3])), ASIS, IS, visu);
+end
 
 % Sacral plane (SP) detection
-[SP, SacralPromontory] = sacralPlateau(pelvis, ASIS, PSIS, visu);
+switch LoP
+    case 1
+        [SP, SacralPromontory] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
+    case 3
+        [SP, SacralPromontory] = sacralPlateau3(pelvis(2), PSIS, visu);
+end
 
 if visu
     viewButtonsRAS
 end
 
 %% Output: The Landmarks
-ClinicalLandmarks.PS = PS;
-ClinicalLandmarks.ASIS = ASIS;
-ClinicalLandmarks.PSIS = PSIS;
-ClinicalLandmarks.AIIS = AIIS;
-ClinicalLandmarks.IschialSpine = IS;
-ClinicalLandmarks.SacralPlane = SP;
-ClinicalLandmarks.SacralPromontory = SacralPromontory;
+LM.PS = PS;
+LM.ASIS = ASIS;
+LM.PSIS = PSIS;
+LM.AIIS = AIIS;
+LM.IschialSpine = IS;
+LM.SacralPlane = SP;
+LM.SacralPromontory = SacralPromontory;
 
 end
 
