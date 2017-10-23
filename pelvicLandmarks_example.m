@@ -4,4 +4,4 @@ clearvars; close all; opengl hardware
 
 load('data\pelvis.mat')
 
-ClinicalLandmarks = pelvicLandmarks(pelvis, ASIS, 'vis', true);
+LM = pelvicLandmarks(pelvis, ASIS, 'vis', true);
