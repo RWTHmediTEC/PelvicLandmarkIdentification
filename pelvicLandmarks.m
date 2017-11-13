@@ -122,12 +122,19 @@ if visu
     viewButtonsRAS
 end
 
+switch LoP
+    case 1
+        
+    case 3
+%         LM.PIIS = posteriorInferiorIliacSpine3(concatenateMeshes(pelvis([1,3])), pelvis(2), AIIS, PSIS, IS, visu);
+end
+
 %% Output: The Landmarks
 LM.PS = PS;
 LM.ASIS = ASIS;
 LM.PSIS = PSIS;
 LM.AIIS = AIIS;
-LM.IschialSpine = IS;
+LM.IS = IS;
 LM.SacralPlane = SP;
 LM.SacralPromontory = SacralPromontory;
 

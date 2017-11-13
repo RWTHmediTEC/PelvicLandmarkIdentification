@@ -45,13 +45,13 @@ while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
-    % For Debugging
-    if visu == true
-        patchProps.EdgeColor='k';
-        tempHandle(1) = patch(tempMesh, patchProps);
-        tempHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
-        delete(tempHandle)
-    end
+%     % For Debugging
+%     if visu == true
+%         patchProps.EdgeColor='k';
+%         tempHandle(1) = patch(tempMesh, patchProps);
+%         tempHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
+%         delete(tempHandle)
+%     end
     if ~ismember(tempYmaxIdx, tempBoundary)
         % If max. y-direction vertex is not on the boundary, it's the SaPro
         SaProIdx = tempYmaxIdx;
