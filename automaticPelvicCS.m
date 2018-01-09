@@ -34,8 +34,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.1
-% DATE: 2017-06-28
+% VERSION: 1.1.2
+% DATE: 2018-01-09
 % LICENSE: CC BY-SA 4.0
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
