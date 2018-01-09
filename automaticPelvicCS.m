@@ -1,5 +1,5 @@
-function [fwTFMinput2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
-%AUTOMATICPELVICCS Calculate an pelvic coordinate system (CS) based on the 
+function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
+%AUTOMATICPELVICCS Calculate the pelvic coordinate system (CS) based on the 
 %   anterior pelvic plane (APP)
 %
 % REQUIRED INPUT:
@@ -11,15 +11,14 @@ function [fwTFMinput2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %   - If faces are oriented inwards, the algorithm won't work.
 %   - The mesh has to consist of 1, 2 or 3 connected components (right hip,
 %     left hip and sacrum. Remove cavities and small isolated connected
-%     components otherwise the algorithm won't work.
+%     components otherwise the algorithm might not work.
 % OPTIONAL INPUT:
 %   visualization: true (default) or false
 % 
 % OUTPUT:
-%   fwTFMinput2APCS: A 4x4 transformation matrix to transform the vertices 
+%   TFM2APCS: A 4x4 transformation matrix to transform the vertices 
 %   of the input mesh into the APCS: 
-%   pelvisAPCS.vertices = ...
-%      transformPointsForward(affine3d(fwTFMinput2APCS'), pelvis.vertices);
+%   pelvisAPCS = transformPoint3d(pelvis, TFM2APCS);
 %   
 %   CL_input: A struct with clinical landmarks in the CS of the input mesh:
 %       ASIS (anterior superior iliac spine)
@@ -32,13 +31,10 @@ function [fwTFMinput2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %       Pelvis, femur, and tibia [Kai 2014]
 %
 % TODO:
-%   - Check if the "face orientation" sanity checks are correct
-%   - Additional sanity checks may be added
-%   - Check if faces are oriented outwards
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.0
+% VERSION: 1.1.1
 % DATE: 2017-06-28
 % LICENSE: CC BY-SA 4.0
 
@@ -47,15 +43,50 @@ addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
 p = inputParser;
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
 addOptional(p,'visualization',true,@islogical);
+addOptional(p,'debugVisu',false,@islogical);
 parse(p,pelvis,varargin{:});
 
 pelvis = p.Results.pelvis;
+visu = p.Results.visualization;
+debugVisu=p.Results.debugVisu;
+
+if debugVisu
+    % New figure
+    monitorsPosition = get(0,'MonitorPositions');
+    FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
+        'ToolBar','figure','WindowScrollWheelFcn',@zoomWithWheel,...
+        'WindowButtonDownFcn',@rotateWithLeftMouse);
+    if     size(monitorsPosition,1) == 1
+        set(FigHandle,'OuterPosition',monitorsPosition(1,:));
+    elseif size(monitorsPosition,1) == 2
+        set(FigHandle,'OuterPosition',monitorsPosition(2,:));
+    end
+    hold on
+    cameratoolbar('SetCoordSys','none')
+    axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
+    lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
+    view(90,0)
+    
+    % Coordinate system
+    Q.C = [1 0 0; 0 1 0; 0 0 1];
+    QDScaling = 20;
+    Q.P = repmat([0, 0, 0], 3, 1);
+    Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
+    [~] = quiver3D(Q.P, Q.D, Q.C);
+    
+    % Patch properties
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = 'r';
+    patchProps.FaceAlpha = 0.5;
+    patchProps.EdgeLighting = 'gouraud';
+    patchProps.FaceLighting = 'gouraud';
+end
 
 % Get inertia transformation
 pelvisProps = inertiaInfo(pelvis);
-
+inertiaTFM = pelvisProps.InertiaTFM;
 % Transform the vertices into the temporary inertia coordinate system
-pelvisInertia = transformPoint3d(pelvis, inv(pelvisProps.inverseInertiaTFM));
+pelvisInertia = transformPoint3d(pelvis, inertiaTFM);
 
 % Define the the maximal width of the pelvis (PW) as connection between the 
 % most lateral points of both sides
@@ -71,16 +102,32 @@ PW = distancePoints3d(pelvisInertia.vertices(PWminIdx,:),pelvisInertia.vertices(
 %     |  Positive  |    Right    |   Inferior  |   Anterior  |
 %     |  Negative  |    Left     |   Superior  |  Posterior  |
 %     ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-% Sanity Checks:
+if debugVisu
+    % The pelvis in the inertia CS
+    patch(pelvisInertia, patchProps)
+end
+% Orientation checks:
 if pelvisInertia.vertices(PWminIdx,2) > 0 || pelvisInertia.vertices(PWmaxIdx,2) > 0
     % If the y-coordinates of the maximal pelvic width are > 0, the 
-    % temporary coordinate system is rotated by 180° around the z-axis
-    warning('This transformation orients the faces inwards')
-    TFM180 = [[-1 0 0 0]; [0 -1 0 0]; [0 0 1 0];  [0 0 0 1]];
-    pelvisProps.inverseInertiaTFM = pelvisProps.inverseInertiaTFM*TFM180;
+    % temporary coordinate system is rotated by 180° around the x-axis or
+    % by 180° around the z-axis
     
+    % Check if the z-axis points anterior or posterior
+    zAxis=[0 0 0 0 0 1];
+    % Get the vertex with minimal distance to the z-axis
+    [~, idx] = min(distancePointLine3d(pelvisInertia.vertices, zAxis));
+    minZaxisVtx=pelvisInertia.vertices(idx,:);
+    
+    if any(minZaxisVtx(3)<0) 
+        % If the z-coordnate of this point is < 0, z axis points anterior
+        TFM180 = createRotationOz(pi);
+    else 
+        % else, z-axis points posterior
+        TFM180 = createRotationOx(pi);
+    end
+    inertiaTFM = TFM180*inertiaTFM;
     % Transform the vertices
-    pelvisInertia.vertices = transformPointsInverse(affine3d(TFM180), pelvisInertia.vertices);
+    pelvisInertia = transformPoint3d(pelvisInertia, TFM180);
     
     % Define the the maximal width of the pelvis as connection between the most
     % lateral points of both sides
@@ -90,18 +137,24 @@ elseif abs(pelvisInertia.vertices(MPPIdx,1)) > 1/4*PW
     % If the x-distance of the most posterior point is greater than 1/4 of
     % the pelvic width the temporary coordinate system is rotated by 180°
     % around the y-axis
-%     warning('This transformation orients the faces inwards')
-    TFM180 = [[-1 0 0 0]; [0 1 0 0]; [0 0 -1 0];  [0 0 0 1]];
-    pelvisProps.inverseInertiaTFM = pelvisProps.inverseInertiaTFM*TFM180;
+    TFM180 = createRotationOy(pi);
+    inertiaTFM = TFM180*inertiaTFM;
     
     % Transform the vertices
-    pelvisInertia.vertices = transformPointsInverse(affine3d(TFM180), pelvisInertia.vertices);
+    pelvisInertia = transformPoint3d(pelvisInertia, TFM180);
     
     % Define the the maximal width of the pelvis as connection between the most
     % lateral points of both sides
     [~, PWminIdx] = min(pelvisInertia.vertices(:,1));
     [~, PWmaxIdx] = max(pelvisInertia.vertices(:,1));
 end
+
+if debugVisu
+    patchProps.FaceColor = 'g';
+    % The pelvis in the APCS
+    patch(pelvisInertia, patchProps)
+end
+
 pelvicMaxWidth = createLine3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:));
 
 % Define the temporary sagittal plane
@@ -161,98 +214,72 @@ end
 pelvicOrientation = [1 0 0 0; 0 0 1 0; 0, -1, 0 0; 0 0 0 1];
 % Position of the APCS origin: pubic symphysis (PS)
 pelvicPosition = [[eye(3), -PS']; [0 0 0 1]];
-% The forward transformation from the target rotation into the APCS
-fwTFMtargetRot2APCS = pelvicOrientation*pelvicPosition;
+% The transformation from the target rotation into the APCS
+TFMtargetRot2APCS = pelvicOrientation*pelvicPosition;
 
-% The forward transformation from inertia transformation into the target rotation
-fwTFMInertia2targetRot=[[targetRot, [0 0 0]']; [0 0 0 1]];
-% The forward transformation from the CS of the input mesh into the target rotation 
-fwTFMinput2targetRot=fwTFMInertia2targetRot*inv(pelvisProps.inverseInertiaTFM);
+% The transformation from inertia transformation into the target rotation
+TFMInertia2targetRot=[[targetRot, [0 0 0]']; [0 0 0 1]];
+% The transformation from the CS of the input mesh into the target rotation 
+TFMinput2targetRot=TFMInertia2targetRot*inertiaTFM;
 % The forward transformation from the CS of the input mesh into the APCS
-fwTFMinput2APCS=fwTFMtargetRot2APCS*fwTFMinput2targetRot;
+TFM2APCS=TFMtargetRot2APCS*TFMinput2targetRot;
 
 % Clinical landmarks (CL) from the target CS 2 the CS of the input mesh
-CL_input.ASIS = transformPointsInverse(affine3d(fwTFMinput2targetRot'), ASIS);
-CL_input.PS   = transformPointsInverse(affine3d(fwTFMinput2targetRot'),   PS);
-
-
-if p.Results.visualization == true
-%% Sanity Checks:
-% The vertex index of the nearest neighbors of the 3 landmarks must be the
-% same in each CS: isequal. The distance between ASIS and the nearest 
-% vertices should be around zero: ismembertol
-
-% % target 2 input
-% Idx_input = knnsearch(pelvis.vertices,[CL_input.ASIS; CL_input.PS]);
-% assert(all(all(ismembertol(pelvis.vertices(Idx_input(1:2),:), CL_input.ASIS))))
-% % input 2 target
-% pelvisTargetRot.vertices = transformPointsForward(affine3d(fwTFMinput2targetRot'), pelvis.vertices);
-% pelvisTargetRot.faces = pelvis.faces;
-% Idx_targetRot = knnsearch(pelvisTargetRot.vertices,[ASIS; PS]);
-% assert(isequal(Idx_input, Idx_targetRot))
-% assert(all(all(ismembertol(pelvisTargetRot.vertices(Idx_targetRot(1:2),:), ASIS))))
-% input 2 ACPS
-pelvisAPCS.vertices = transformPointsForward(affine3d(fwTFMinput2APCS'), pelvis.vertices);
-pelvisAPCS.faces = pelvis.faces;
-CL_APCS.ASIS = transformPointsForward(affine3d(fwTFMtargetRot2APCS'), ASIS);
-CL_APCS.PS   = transformPointsForward(affine3d(fwTFMtargetRot2APCS'),   PS);
-% Idx_APCS = knnsearch(pelvisAPCS.vertices,[CL_APCS.ASIS; CL_APCS.PS]);
-% assert(isequal(Idx_input, Idx_APCS))
-% assert(all(all(ismembertol(pelvisAPCS.vertices(Idx_APCS(1:2),:), CL_APCS.ASIS))))
-
+CL_input.ASIS = transformPointsInverse(affine3d(TFMinput2targetRot'), ASIS);
+CL_input.PS   = transformPointsInverse(affine3d(TFMinput2targetRot'),   PS);
 
 %% Visualization
-% New figure
-monitorsPosition = get(0,'MonitorPositions');
-FigHandle = figure('Units','pixels','renderer','opengl', 'Color', [1 1 1],'ToolBar','figure',...
-    'WindowScrollWheelFcn',@zoomWithWheel,'WindowButtonDownFcn',@rotateWithLeftMouse);
-if     size(monitorsPosition,1) == 1
-    set(FigHandle,'OuterPosition',monitorsPosition(1,:));
-elseif size(monitorsPosition,1) == 2
-    set(FigHandle,'OuterPosition',monitorsPosition(2,:));
-end
-hold on
-title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
-    'Left mouse - Rotate | Mouse wheel - Zoom'})
-cameratoolbar('SetCoordSys','none')
-axis equal; axis on; xlabel('X [mm]'); ylabel('Y [mm]'); zlabel('Z [mm]');
-lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
-view(90,0)
-
-% Coordinate system
-Q.C = [1 0 0; 0 1 0; 0 0 1];
-scalingFactor = distancePoints3d(pelvisInertia.vertices(PWminIdx,:),...
-    pelvisInertia.vertices(PWmaxIdx,:));
-QDScaling = 0.1 * scalingFactor;
-Q.P = repmat([0, 0, 0], 3, 1);
-Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
-[~] = quiver3D(Q.P, Q.D, Q.C);
-
-% Patch properties
-patchProps.EdgeColor = 'none';
-patchProps.FaceColor = [223, 206, 161]/255;
-patchProps.FaceAlpha = 1;
-patchProps.EdgeLighting = 'gouraud';
-patchProps.FaceLighting = 'gouraud';
-
-% The pelvis in the APCS
-patch(pelvisAPCS, patchProps)
-
-% APP triangle
-patchProps.Marker = 'o';
-patchProps.MarkerEdgeColor = 'y';
-patchProps.MarkerFaceColor = 'y';
-patchProps.FaceColor = 'y';
-patchProps.FaceAlpha = 0.75;
-patchProps.EdgeColor = 'k';
-APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
-APPPatch.faces = [1 2 3];
-patch(APPPatch, patchProps)
-
-% normals=faceNormal(pelvisAPCS.vertices,pelvisAPCS.faces);
-% centroids=faceCentroids(pelvisAPCS.vertices,pelvisAPCS.faces);
-% drawVector3d(centroids, normals*0.01*scalingFactor);
-
+if visu == true
+    % New figure
+    monitorsPosition = get(0,'MonitorPositions');
+    FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
+        'ToolBar','none','WindowScrollWheelFcn',@zoomWithWheel,...
+        'WindowButtonDownFcn',@rotateWithLeftMouse);
+    if     size(monitorsPosition,1) == 1
+        set(FigHandle,'OuterPosition',monitorsPosition(1,:));
+    elseif size(monitorsPosition,1) == 2
+        set(FigHandle,'OuterPosition',monitorsPosition(2,:));
+    end
+    hold on
+    title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
+        'Left mouse - Rotate | Mouse wheel - Zoom'})
+    cameratoolbar('SetCoordSys','none')
+    axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
+    lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
+    view(90,0)
+    
+    % Landmarks in the APCS
+    CL_APCS.ASIS = transformPoint3d(ASIS, TFMtargetRot2APCS);
+    CL_APCS.PS   = transformPoint3d(PS  , TFMtargetRot2APCS);
+    
+    % Coordinate system
+    Q.C = [1 0 0; 0 1 0; 0 0 1];
+    ASISdist = distancePoints3d(CL_APCS.ASIS(1,:),CL_APCS.ASIS(2,:));
+    QDScaling = 1/8 * ASISdist;
+    Q.P = repmat([0, 0, 0], 3, 1);
+    Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
+    [~] = quiver3D(Q.P, Q.D, Q.C);
+    
+    % Patch properties
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [223, 206, 161]/255;
+    patchProps.FaceAlpha = 1;
+    patchProps.EdgeLighting = 'gouraud';
+    patchProps.FaceLighting = 'gouraud';
+    
+    % The pelvis in the APCS
+    patch(transformPoint3d(pelvis, TFM2APCS), patchProps)
+    
+    % APP triangle
+    patchProps.Marker = 'o';
+    patchProps.MarkerEdgeColor = 'y';
+    patchProps.MarkerFaceColor = 'y';
+    patchProps.FaceColor = 'y';
+    patchProps.FaceAlpha = 0.75;
+    patchProps.EdgeColor = 'k';
+    APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
+    APPPatch.faces = [1 2 3];
+    patch(APPPatch, patchProps)
 end
 
 end
@@ -271,7 +298,8 @@ if det(props.pAxes) < 0
 end
 
 % Create a affine transformation to move the Bone into his own Inertia System
-props.inverseInertiaTFM = [ [props.pAxes props.CoM]; [0 0 0 1] ];
+Rotation = eye(4); Rotation(1:3,1:3)=props.pAxes';
+props.InertiaTFM =Rotation*createTranslation3d(-props.CoM);
 
 end
 
@@ -305,7 +333,7 @@ APP = createPlane(PS, ASIS(1,:), ASIS(2,:));
 % Temporary rotation matrix
 tempRot(1,:) = normalizeVector3d(ASIS(2,:)-ASIS(1,:));
 tempRot(3,:) = normalizeVector3d(planeNormal(APP));
-tempRot(2,:) = normalizeVector3d(vectorCross3d(tempRot(3,:), tempRot(1,:)));
+tempRot(2,:) = normalizeVector3d(crossProduct3d(tempRot(3,:), tempRot(1,:)));
 end
 
 function zoomWithWheel(~,evnt)
