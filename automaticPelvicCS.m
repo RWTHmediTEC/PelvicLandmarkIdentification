@@ -3,7 +3,7 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %   anterior pelvic plane (APP)
 %
 % REQUIRED INPUT:
-%   A mesh of the pelvis (hip bones and sacrum) consisting of one
+%   pelvis: A mesh of the pelvis (hip bones and sacrum) consisting of one
 %   component with the fields: pelvis.vertices, pelvis.faces
 %   ATTENTION: 
 %   - If the mesh is connected between the right and the left hip in the 
@@ -13,15 +13,17 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %     left hip and sacrum. Remove cavities and small isolated connected
 %     components otherwise the algorithm might not work.
 % OPTIONAL INPUT:
-%   visualization: true (default) or false
+%   'visualization': true (default) or false
+%   resetPath: Resets the path to the inital state after the function was
+%       called. Default is false.
 % 
 % OUTPUT:
 %   TFM2APCS: A 4x4 transformation matrix to transform the vertices 
 %   of the input mesh into the APCS: 
-%   pelvisAPCS = transformPoint3d(pelvis, TFM2APCS);
-%   
+%       pelvisAPCS = transformPoint3d(pelvis, TFM2APCS);
 %   CL_input: A struct with clinical landmarks in the CS of the input mesh:
-%       ASIS (anterior superior iliac spine)
+%       ASIS (anterior superior iliac spine): 
+%           ASIS(1,:) left | ASIS(2,:) right
 %       PS (pubic symphysis)
 %
 % REFERENCES:
@@ -30,25 +32,28 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %       system for three-dimensional bone models of the lower extremities:
 %       Pelvis, femur, and tibia [Kai 2014]
 %
-% TODO:
-%
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.2
-% DATE: 2018-01-09
+% VERSION: 1.1.3
+% DATE: 2018-01-12
 % LICENSE: CC BY-SA 4.0
-
-addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
 
 p = inputParser;
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
-addOptional(p,'visualization',true,@islogical);
-addOptional(p,'debugVisu',false,@islogical);
+addParameter(p,'visualization',true,@islogical);
+addParameter(p,'debugVisu',false,@islogical);
+addParameter(p,'resetPath',false,@islogical);
 parse(p,pelvis,varargin{:});
 
 pelvis = p.Results.pelvis;
 visu = p.Results.visualization;
 debugVisu=p.Results.debugVisu;
+resetPath=p.Results.resetPath;
+
+if resetPath
+    path_backup = path();
+end
+addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
 
 if debugVisu
     % New figure
@@ -151,7 +156,7 @@ end
 
 if debugVisu
     patchProps.FaceColor = 'g';
-    % The pelvis in the APCS
+    % The pelvis in the checked inertia system
     patch(pelvisInertia, patchProps)
 end
 
@@ -192,17 +197,38 @@ tempMeshes = flipud(splitMesh(tempMesh));
 quadrant(3)=tempMeshes(1);
 quadrant(4)=tempMeshes(2);
 
+if debugVisu
+    appProps.Marker = 'o';
+    appProps.MarkerEdgeColor = 'y';
+    appProps.MarkerFaceColor = 'y';
+    appProps.FaceColor = 'y';
+    appProps.FaceAlpha = 0.75;
+    appProps.EdgeColor = 'k';
+    % The quadrants
+    patchProps.FaceColor = 'b';
+    arrayfun(@(x) patch(x, patchProps), quadrant)
+end
+
 % Calculate the APP and rotate the mesh into the APP until the rotation
 % vanishes and converges to: tempRot == eye(3). Not described in [Kai 2014]
 [tempRot, ASIS, PS] = anteriorPelvicPlane(quadrant);
 % The product of all temporary rotations is the target rotation: targetRot
 targetRot = tempRot;
-while ~isequal(eye(3), tempRot)
+while ~all(all(abs(eye(3)-tempRot)<eps))
     for q=1:4
         quadrant(q).vertices=transformPoint3d(quadrant(q).vertices, tempRot);
     end
     [tempRot, ASIS, PS] = anteriorPelvicPlane(quadrant);
     targetRot = tempRot*targetRot;
+    if debugVisu
+        patchProps.FaceColor = 'b';
+        % The quadrants
+        qHandle = arrayfun(@(x) patch(x, patchProps), quadrant);
+        APPPatch.vertices=[PS; ASIS(1,:); ASIS(2,:)];
+        APPPatch.faces = [1 2 3];
+        appHandle = patch(APPPatch, appProps);
+        delete([qHandle, appHandle])
+    end
 end
 
 % Orientation of the pelvis in the APCS
@@ -271,15 +297,19 @@ if visu == true
     patch(transformPoint3d(pelvis, TFM2APCS), patchProps)
     
     % APP triangle
-    patchProps.Marker = 'o';
-    patchProps.MarkerEdgeColor = 'y';
-    patchProps.MarkerFaceColor = 'y';
-    patchProps.FaceColor = 'y';
-    patchProps.FaceAlpha = 0.75;
-    patchProps.EdgeColor = 'k';
+    appProps.Marker = 'o';
+    appProps.MarkerEdgeColor = 'y';
+    appProps.MarkerFaceColor = 'y';
+    appProps.FaceColor = 'y';
+    appProps.FaceAlpha = 0.75;
+    appProps.EdgeColor = 'k';
     APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
     APPPatch.faces = [1 2 3];
-    patch(APPPatch, patchProps)
+    patch(APPPatch, appProps)
+end
+
+if resetPath
+    revert_path_on_return = onCleanup(@() path(path_backup));
 end
 
 end
