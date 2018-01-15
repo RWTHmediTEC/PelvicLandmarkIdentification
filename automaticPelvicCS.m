@@ -34,9 +34,10 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.3
-% DATE: 2018-01-12
-% LICENSE: CC BY-SA 4.0
+% VERSION: 1.1.4
+% DATE: 2018-01-15
+% LICENSE: Modified BSD License (BSD license with non-military-use clause)
+%
 
 p = inputParser;
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
