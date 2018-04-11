@@ -23,8 +23,9 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %       pelvisAPCS = transformPoint3d(pelvis, TFM2APCS);
 %   CL_input: A struct with clinical landmarks in the CS of the input mesh:
 %       ASIS (anterior superior iliac spine): 
-%           ASIS(1,:) left | ASIS(2,:) right
+%             ASIS(1,:) left | ASIS(2,:) right
 %       PS (pubic symphysis)
+%       PT (pubic tubercles): PT(1,:) left | PT(2,:) right
 %
 % REFERENCES:
 %   The implementation is based roughly on:
@@ -34,8 +35,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.4
-% DATE: 2018-01-15
+% VERSION: 1.1.5
+% DATE: 2018-04-11
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -212,14 +213,14 @@ end
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
 % vanishes and converges to: tempRot == eye(3). Not described in [Kai 2014]
-[tempRot, ASIS, PS] = anteriorPelvicPlane(quadrant);
+[tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant);
 % The product of all temporary rotations is the target rotation: targetRot
 targetRot = tempRot;
 while ~all(all(abs(eye(3)-tempRot)<eps))
     for q=1:4
         quadrant(q).vertices=transformPoint3d(quadrant(q).vertices, tempRot);
     end
-    [tempRot, ASIS, PS] = anteriorPelvicPlane(quadrant);
+    [tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant);
     targetRot = tempRot*targetRot;
     if debugVisu
         patchProps.FaceColor = 'b';
@@ -254,6 +255,7 @@ TFM2APCS=TFMtargetRot2APCS*TFMinput2targetRot;
 % Clinical landmarks (CL) from the target CS 2 the CS of the input mesh
 CL_input.ASIS = transformPointsInverse(affine3d(TFMinput2targetRot'), ASIS);
 CL_input.PS   = transformPointsInverse(affine3d(TFMinput2targetRot'),   PS);
+CL_input.PT   = transformPointsInverse(affine3d(TFMinput2targetRot'),   PT);
 
 %% Visualization
 if visu == true
@@ -278,6 +280,7 @@ if visu == true
     % Landmarks in the APCS
     CL_APCS.ASIS = transformPoint3d(ASIS, TFMtargetRot2APCS);
     CL_APCS.PS   = transformPoint3d(PS  , TFMtargetRot2APCS);
+    CL_APCS.PT   = transformPoint3d(PT  , TFMtargetRot2APCS);
     
     % Coordinate system
     Q.C = [1 0 0; 0 1 0; 0 0 1];
@@ -307,6 +310,13 @@ if visu == true
     APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
     APPPatch.faces = [1 2 3];
     patch(APPPatch, appProps)
+    
+    % Pubic tubercle
+    pointProps.Color='none';
+    pointProps.Marker = 'o';
+    pointProps.MarkerEdgeColor = 'k';
+    pointProps.MarkerFaceColor = 'k';
+    plot3(CL_APCS.PT(:,1),CL_APCS.PT(:,2),CL_APCS.PT(:,3),pointProps)
 end
 
 if resetPath
@@ -334,7 +344,7 @@ props.InertiaTFM =Rotation*createTranslation3d(-props.CoM);
 
 end
 
-function [tempRot, ASIS, PS] = anteriorPelvicPlane(quadrant)
+function [tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant)
 % Calculate the mid point of the minimal width of the pubic symphysis (MWPS)
 [dist, distIdx] = pdist2(quadrant(3).vertices,quadrant(4).vertices,'euclidean','Smallest',1);
 [~, minDistIdx]= min(dist);
@@ -350,6 +360,8 @@ for q=1:4
 end
 % Anterior superior iliac spine (ASIS)
 ASIS = mostAnteriorPoints(1:2,:);
+% Pubic tubercle (PT)
+PT = mostAnteriorPoints(3:4,:);
 
 % Project mid point of the minimal width of the pubic symphysis on the line
 % connecting the two distal most anterior points (MAP). By contrast  
