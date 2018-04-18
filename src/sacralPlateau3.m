@@ -1,5 +1,4 @@
-function [SP, SacralPromontory] = sacralPlateau3(sacrum, PSIS, varargin)
-% Sacral plane (SP) detection
+function [SacralPromontory, SP, SM] = sacralPlateau3(sacrum, PSIS, varargin)
 
 parser = inputParser;
 addOptional(parser,'visualization',true,@islogical);
@@ -26,12 +25,12 @@ end
 
 % Keep the medial part of the mesh between the PSIS points
 tempMesh=sacrum;
-cuttingFactor = 1;
+cuttingFactor = 0.9;
 tempReductionPlaneIdx = 0;
 SaProIdx = NaN;
 while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
-    rightSagittalPlane = [PSIS(2,1) 0 0 0 1 0 0 0 1];
-    leftSagittalPlane = [PSIS(1,1) 0 0 0 1 0 0 0 1];
+    rightSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
+    leftSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     % Reduce the region
     switch tempReductionPlaneIdx
         case 1
@@ -188,6 +187,8 @@ while curvatureThreshold > 0.06 && endCriteria>2
 %     end
 end
 
+SM = flatsMesh;
+
 if visu == true
 %     % For Debugging
 %     % Properties for the visualization of the curvature
@@ -207,7 +208,7 @@ if visu == true
     % Sacral plateau
     patchProps.FaceColor = 'none';
     patchProps.EdgeColor = 'k';
-    patch(flatsMesh,patchProps);
+    patch(SM,patchProps);
     % Centroid of the sacral plateau
     pointProps.MarkerEdgeColor = 'y';
     pointProps.MarkerFaceColor = 'y';

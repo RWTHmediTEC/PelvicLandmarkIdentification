@@ -18,7 +18,9 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 % OUTPUT: A struct with the following fields 
 %   PSIS = Posterior Superior Iliac Spine: 2x3 matrix with xyz-ccordinates
 %   AIIS = Anterior Inferior Iliac Spine: 2x3 matrix with xyz-ccordinates
-%   IschialSpine: 2x3 matrix with xyz-ccordinates
+%   IS = 2x3 matrix with xyz-ccordinates
+%   Note: For PSIS, AIIS and IS, the first row (1,:) is the left side and 
+%       the second row (2,:) is the right side
 %   SacralPlateau: 1x9 matrix of a plane. SP(1:3) is the centroid
 %       of the sacral plateau. SP(4:9) are two vectors spanning the plane
 %   SacralPromontory: 1x3 vector with xyz-ccordinates
@@ -113,9 +115,9 @@ end
 % Sacral plane (SP) detection
 switch LoP
     case 1
-        [SP, SacralPromontory] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
+        [SacralPromontory, SP, SM] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
     case 3
-        [SP, SacralPromontory] = sacralPlateau3(pelvis(2), PSIS, visu);
+        [SacralPromontory, SP, SM] = sacralPlateau3(pelvis(2), PSIS, visu);
 end
 
 if visu
@@ -137,6 +139,7 @@ LM.AIIS = AIIS;
 LM.IS = IS;
 LM.SacralPlane = SP;
 LM.SacralPromontory = SacralPromontory;
+LM.SacralPlateau = SM;
 
 end
 
