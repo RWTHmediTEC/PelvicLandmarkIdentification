@@ -98,7 +98,7 @@ curvature = abs(curvatureMax-curvatureMin);
 curvatureThreshold = 0.1; % Close to 0 [Beniere 2011].
 endCriteria = Inf; % See below
 % The curvature threshold is reduced while endCriteria is above X.
-while curvatureThreshold > 0.06 && endCriteria>2
+while curvatureThreshold > 0.06 && endCriteria>2.5
     % Vertices of flats
     flatsVerticesIdx = curvature<curvatureThreshold;
     % Faces with all three vertices part of flats
@@ -143,7 +143,7 @@ while curvatureThreshold > 0.06 && endCriteria>2
         % Get the distance between the centroid and sacral promontory
         flatsCenSaProDist = distancePoints3d(flatsCentroids, SacralPromontory);
         % Keep flats with a CenSaProDist below the threshold
-        MAX_CEN_SAPRO_DIST = 30; % mm
+        MAX_CEN_SAPRO_DIST = 40; % mm
         tempIdx = flatsCenSaProDist < MAX_CEN_SAPRO_DIST;
         flatsMesh = flatsMesh(tempIdx);
         flatsNormal = flatsNormal(tempIdx,:);
