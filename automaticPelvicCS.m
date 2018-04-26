@@ -35,8 +35,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.5
-% DATE: 2018-04-11
+% VERSION: 1.1.6
+% DATE: 2018-04-26
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -114,7 +114,7 @@ if debugVisu
     patch(pelvisInertia, patchProps)
 end
 % Orientation checks:
-if pelvisInertia.vertices(PWminIdx,2) > 0 || pelvisInertia.vertices(PWmaxIdx,2) > 0
+if pelvisInertia.vertices(PWminIdx,2) > 0 && pelvisInertia.vertices(PWmaxIdx,2) > 0
     % If the y-coordinates of the maximal pelvic width are > 0, the 
     % temporary coordinate system is rotated by 180° around the x-axis or
     % by 180° around the z-axis
