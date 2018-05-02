@@ -68,6 +68,8 @@ while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
         [~, tempReductionPlaneIdx] = min(distancePoints3d(PSIS, tempMesh.vertices(tempYmaxIdx,:)));
     end
 end
+% Use the mean of the vertices for the x coordinate of the SaPro
+SaProIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(SaProIdx,2:3)]);																								 
 % Keep the part of the temporary mesh above the SaPro
 SacralPromontory = tempMesh.vertices(SaProIdx,:);
 distTransversePlane = [0 0 tempMesh.vertices(SaProIdx,3) 1 0 0 0 1 0];

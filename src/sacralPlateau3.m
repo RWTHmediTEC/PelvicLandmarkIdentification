@@ -59,6 +59,8 @@ while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
         [~, tempReductionPlaneIdx] = min(distancePoints3d(PSIS, tempMesh.vertices(tempYmaxIdx,:)));
     end
 end
+% Use the mean of the vertices for the x coordinate of the SaPro
+SaProIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(SaProIdx,2:3)]);
 % Keep the part of the temporary mesh above the SaPro
 SacralPromontory = tempMesh.vertices(SaProIdx,:);
 distTransversePlane = [0 0 tempMesh.vertices(SaProIdx,3) 1 0 0 0 1 0];
@@ -89,7 +91,7 @@ curvature = abs(curvatureMax-curvatureMin);
 curvatureThreshold = 0.1; % Close to 0 [Beniere 2011].
 endCriteria = Inf; % See below
 % The curvature threshold is reduced while endCriteria is above X.
-while curvatureThreshold > 0.06 && endCriteria>2.5
+while curvatureThreshold > 0.06 && endCriteria>2
     % Vertices of flats
     flatsVerticesIdx = curvature<curvatureThreshold;
     % Faces with all three vertices part of flats
