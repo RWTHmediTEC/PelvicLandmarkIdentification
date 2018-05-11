@@ -35,8 +35,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.6
-% DATE: 2018-04-26
+% VERSION: 1.1.7
+% DATE: 2018-05-11
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
