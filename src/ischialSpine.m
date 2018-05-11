@@ -10,10 +10,14 @@ visu = parser.Results.visualization;
 sagittalPlane = [0 0 0 0 1 0 0 0 1];
 % Height of the APP
 APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane);
-% Transverse plane to keep only the distal part of the pelvis
-DIST_CUTTING_FACTOR = 0.4;
-distTransversePlane = [0 0 DIST_CUTTING_FACTOR*APPheight(3) 1 0 0 0 1 0];
-tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','below');
+% Transverse plane of the superior cut
+SUPERIOR_CUT_FACTOR = 0.5;
+supTransversePlane = [0 0 SUPERIOR_CUT_FACTOR*APPheight(3) 1 0 0 0 1 0];
+tempMesh = cutMeshByPlane(pelvis, supTransversePlane,'part','below');
+% Transverse plane of the inferior cut
+INFERIOR_CUT_VALUE = 0; % mm
+supTransversePlane = [0 0 INFERIOR_CUT_VALUE 1 0 0 0 1 0];
+tempMesh = cutMeshByPlane(tempMesh, supTransversePlane,'part','above');
 
 tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
@@ -29,18 +33,19 @@ else
     distPelvis(2) = tempMesh(2);
 end
 
-% % For Debugging
+% For Debugging
 % if visu == true
 %     patchProps.EdgeColor = 'k';
 %     patchProps.FaceColor = [0.75 0.75 0.75];
 %     patchProps.FaceAlpha = 0.5;
 %     patchProps.EdgeLighting = 'gouraud';
 %     patchProps.FaceLighting = 'gouraud';
-%     arrayfun(@(x) patch(x, patchProps), distPelvis)
+%     tempMeshHandles=arrayfun(@(x) patch(x, patchProps), distPelvis);
+%     delete(tempMeshHandles)
 % end
 
 % Rotate from 45° to 135° in steps of 1°
-theta = linspace(1/4*pi, 3/4*pi, 90);
+theta = linspace(1/2*pi, 3/4*pi, 45);
 % Preallocation
 zMinIdx=zeros(2,length(theta));
 sideDist=zeros(1,length(theta));
@@ -67,6 +72,18 @@ for s=1:2
 end
 
 if visu == true
+%     % For Debugging
+%     % Visualize all point pairs 
+%     edgeProps.Linestyle = '-';
+%     edgeProps.Marker = 'o';
+%     edgeProps.Color = 'k';
+%     edgeProps.MarkerEdgeColor = 'k';
+%     edgeProps.MarkerFaceColor = 'k';
+%     tempHandles=drawEdge3d([distPelvis(1).vertices(zMinIdx(1,:),:), ...
+%         distPelvis(2).vertices(zMinIdx(2,:),:)],edgeProps);
+%     delete(tempHandles)
+    
+    % Draw IS points
     pointProps.Linestyle = 'none';
     pointProps.Marker = 'o';
     pointProps.MarkerEdgeColor = 'm';
@@ -74,13 +91,4 @@ if visu == true
     drawPoint3d(IS, pointProps)
     text(IS(:,1), IS(:,2), IS(:,3), 'IS','FontWeight','bold',...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
-%     % For Debugging
-%     % Visualize all point pairs 
-%     edgeProps.Linestyle = '-';
-%     edgeProps.Marker = 'o';
-%     edgeProps.Color = 'm';
-%     edgeProps.MarkerEdgeColor = 'm';
-%     edgeProps.MarkerFaceColor = 'm';
-%     drawEdge3d([distPelvis(1).vertices(zMinIdx(1,:),:), ...
-%         distPelvis(2).vertices(zMinIdx(2,:),:)],edgeProps)
 end
