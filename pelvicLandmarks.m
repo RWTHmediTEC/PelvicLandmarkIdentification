@@ -35,6 +35,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %   TO-DO / IDEAS:
 %   Parse & validate inputs
 %   Clean up & standardize code
+%   Add debug visualization
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University

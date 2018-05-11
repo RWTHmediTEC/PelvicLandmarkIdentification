@@ -113,7 +113,7 @@ while curvatureThreshold > 0.06 && endCriteria>2
     if ~isempty(flatsMesh)
         % Sum of all normals of each flat
         flatsNormal = cell2mat(arrayfun(@(x) normalizeVector3d(...
-            sum(faceNormal(x.vertices, x.faces), 1)), flatsMesh, 'Uni', 0));
+            sum(meshFaceNormals(x), 1)), flatsMesh, 'Uni', 0));
         
         % Keep flats with a positive y-direction of the normal
         posYnormalIdx = flatsNormal(:,2) >= 0;
