@@ -122,7 +122,7 @@ switch LoP
 end
 
 if visu
-    viewButtonsRAS
+    medicalViewButtons('RAS')
 end
 
 switch LoP
