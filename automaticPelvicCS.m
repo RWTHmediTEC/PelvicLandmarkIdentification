@@ -35,8 +35,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.7
-% DATE: 2018-05-11
+% VERSION: 1.1.8
+% DATE: 2018-05-25
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -271,7 +271,7 @@ if visu == true
     end
     hold on
     title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
-        'Left mouse - Rotate | Mouse wheel - Zoom'})
+        'Scroll click - Rotate | Scroll - Zoom'})
     cameratoolbar('SetCoordSys','none')
     axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
     lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
@@ -396,7 +396,7 @@ end
 end
 
 function rotateWithLeftMouse(src,~)
-if strcmp(get(src,'SelectionType'),'normal')
+if strcmp(get(src,'SelectionType'),'extend')
     cameratoolbar('SetMode','orbit')
 end
 end
