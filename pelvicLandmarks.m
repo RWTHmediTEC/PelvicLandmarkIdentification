@@ -94,7 +94,7 @@ switch LoP
     case 1
         PSIS = posteriorSuperiorIliacSpine1(pelvis,visu);
     case 3
-        PSIS = posteriorSuperiorIliacSpine3(pelvis,visu);
+        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, visu);
 end
 
 % Ischial spine (IS) detection

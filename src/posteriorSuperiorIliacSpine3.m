@@ -1,4 +1,4 @@
-function PSIS = posteriorSuperiorIliacSpine3(pelvis,varargin)
+function PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, varargin)
 % Posterior superior iliac spine (PSIS) % iliac crest (IC) detection
 
 parser = inputParser;
@@ -6,9 +6,19 @@ addOptional(parser,'visualization',true,@islogical);
 parse(parser,varargin{:});
 visu = parser.Results.visualization;
 
-% Cut the pelvic bone along the sagittal plane
-proxPelvis(1) = pelvis(1);
-proxPelvis(2) = pelvis(3);
+proxPelvis(1) = pelvis(1); % left hip
+proxPelvis(2) = pelvis(3); % right hip
+
+% Sagittal plane
+sagittalPlane = [0 0 0 0 1 0 0 0 1];
+% Height of the APP
+APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane);
+% Transverse cutting plane
+CUT_FACTOR = 0.6;
+transversePlane = [0 0 CUT_FACTOR*APPheight(3) 1 0 0 0 1 0];
+for s=1:2
+    proxPelvis(s) = cutMeshByPlane(proxPelvis(s), transversePlane,'part','above');
+end
 
 yMinIdx=zeros(1,2);
 PSIS=zeros(2,3);
