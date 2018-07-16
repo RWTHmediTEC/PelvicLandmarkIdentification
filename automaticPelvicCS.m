@@ -11,7 +11,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %   - If faces are oriented inwards, the algorithm won't work.
 %   - The mesh has to consist of 1, 2 or 3 connected components (right hip,
 %     left hip and sacrum. Remove cavities and small isolated connected
-%     components otherwise the algorithm might not work.
+%     components at least for the hip bones otherwise the algorithm might 
+%     not work.
 % OPTIONAL INPUT:
 %   'visualization': true (default) or false
 %   resetPath: Resets the path to the inital state after the function was
