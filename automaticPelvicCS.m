@@ -36,8 +36,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.8
-% DATE: 2018-05-25
+% VERSION: 1.1.9
+% DATE: 2018-07-17
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -190,15 +190,12 @@ PDPoint = 2/3*(maxPelvicWidthHeight+pelvicDistalWidthHeight);
 transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
 
 % Cut the mesh in four quadrants by the two planes
+% TO TEST: Maybe use biggest bounding box instead of most vertices
 [rightMesh, ~, leftMesh] = cutMeshByPlane(pelvisInertia, sagittalPlane);
 quadrant(1) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','above');
 quadrant(2) = cutMeshByPlane(rightMesh, transversePDPlane, 'part','above');
-tempMesh = cutMeshByPlane(pelvisInertia, transversePDPlane, 'part','below');
-tempMeshes = flipud(splitMesh(tempMesh));
-% Use only the two biggest components of the distal part
-% [~,sortingIndices] = sort(arrayfun(@(x) size(x.faces,1), tempMeshes),'descend');
-quadrant(3)=tempMeshes(1);
-quadrant(4)=tempMeshes(2);
+quadrant(3) = splitMesh(cutMeshByPlane(leftMesh, transversePDPlane, 'part','below'),'mostVertices');
+quadrant(4) = splitMesh(cutMeshByPlane(rightMesh, transversePDPlane, 'part','below'),'mostVertices');
 
 if debugVisu
     appProps.Marker = 'o';
@@ -254,9 +251,9 @@ TFMinput2targetRot=TFMInertia2targetRot*inertiaTFM;
 TFM2APCS=TFMtargetRot2APCS*TFMinput2targetRot;
 
 % Clinical landmarks (CL) from the target CS 2 the CS of the input mesh
-CL_input.ASIS = transformPointsInverse(affine3d(TFMinput2targetRot'), ASIS);
-CL_input.PS   = transformPointsInverse(affine3d(TFMinput2targetRot'),   PS);
-CL_input.PT   = transformPointsInverse(affine3d(TFMinput2targetRot'),   PT);
+CL_input.ASIS = transformPoint3d(ASIS, inv(TFMinput2targetRot));
+CL_input.PS   = transformPoint3d(  PS, inv(TFMinput2targetRot));
+CL_input.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
 
 %% Visualization
 if visu == true
