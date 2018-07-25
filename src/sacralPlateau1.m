@@ -1,5 +1,4 @@
-function [SP, SacralPromontory, SM] = sacralPlateau1(pelvis, ASIS, PSIS, varargin)
-% Sacral plane (SP) detection
+function [SP, SacralPlane, SacralMesh] = sacralPlateau1(pelvis, ASIS, PSIS, varargin)
 
 parser = inputParser;
 addOptional(parser,'visualization',true,@islogical);
@@ -28,16 +27,16 @@ DIST_CUTTING_FACTOR = 0.9;
 distTransversePlane = [0 0 DIST_CUTTING_FACTOR*APPheight(3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','above');
 
-% Sacral Promontory (SaPro)
-% The SaPro has to be on the rim of the sacral plateau. While the SaPro is 
-% on the boundary of the cutted region, the region is reduced. If the 
-% region is empty, SaPro was not found.
+% Sacral Promontory (SP)
+% The SP has to be on the rim of the sacral plateau. While the SP is on the 
+% boundary of the cutted region, the region is reduced. If the region is 
+% empty, SP was not found.
 
 % Keep the medial part of the mesh between the PSIS points
 cuttingFactor = 0.9;
 tempReductionPlaneIdx = 0;
-SaProIdx = NaN;
-while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
+spIdx = NaN;
+while isnan(spIdx) && ~isempty(tempMesh.vertices)
     rightSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     leftSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     % Reduce the region
@@ -61,24 +60,24 @@ while isnan(SaProIdx) && ~isempty(tempMesh.vertices)
 %         delete(tempHandle)
 %     end
     if ~ismember(tempYmaxIdx, tempBoundary)
-        % If max. y-direction vertex is not on the boundary, it's the SaPro
-        SaProIdx = tempYmaxIdx;
+        % If max. y-direction vertex is not on the boundary, it's the SP
+        spIdx = tempYmaxIdx;
     else
         % If it is on the boundary, is it on the right or the left side
         [~, tempReductionPlaneIdx] = min(distancePoints3d(PSIS, tempMesh.vertices(tempYmaxIdx,:)));
     end
 end
-% Use the mean of the vertices for the x coordinate of the SaPro
-SaProIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(SaProIdx,2:3)]);																								 
-% Keep the part of the temporary mesh above the SaPro
-SacralPromontory = tempMesh.vertices(SaProIdx,:);
-distTransversePlane = [0 0 tempMesh.vertices(SaProIdx,3) 1 0 0 0 1 0];
+% Use the mean of the vertices for the x coordinate of the SP
+spIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);																								 
+% Keep the part of the temporary mesh above the SP
+SP = tempMesh.vertices(spIdx,:);
+distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
 if visu == true
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
-    drawPoint3d(SacralPromontory, pointProps)
+    drawPoint3d(SP, pointProps)
 %     % For Debugging
 %     patchProps.EdgeColor = 'k';
 %     patch(tempMesh, patchProps)
@@ -143,7 +142,7 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
         flatsCentroids = cell2mat(arrayfun(@(x) ...
             polyhedronCentroid(x.vertices, x.faces), flatsMesh, 'Uni', 0));
         % Get the distance between the centroid and sacral promontory
-        flatsCenSaProDist = distancePoints3d(flatsCentroids, SacralPromontory);
+        flatsCenSaProDist = distancePoints3d(flatsCentroids, SP);
         % Keep flats with a CenSaProDist below the threshold
         MAX_CEN_SAPRO_DIST = 40; % mm
         tempIdx = flatsCenSaProDist < MAX_CEN_SAPRO_DIST;
@@ -165,7 +164,7 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
         flatsCentroids = flatsCentroids(minDistIdx,:);
         flatsCenSaProDist = flatsCenSaProDist(minDistIdx);
         % Construct the sacral plane
-        SP = fitPlane(flatsMesh.vertices);
+        SacralPlane = fitPlane(flatsMesh.vertices);
         % Fit an ellipse to the sacral plateau and calculate a/b
         fittedEllipse = fitEllipse3d(...
             flatsMesh.vertices(unique(outline(flatsMesh.faces)),:),'visu',false);
@@ -198,7 +197,7 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
 %     end
 end
 
-SM = flatsMesh;
+SacralMesh = flatsMesh;
 
 if visu == true
 %     % For Debugging
@@ -219,16 +218,16 @@ if visu == true
     % Sacral plateau
     patchProps.FaceColor = 'none';
     patchProps.EdgeColor = 'k';
-    patch(SM,patchProps);
+    patch(SacralMesh,patchProps);
     % Centroid of the sacral plateau
     pointProps.MarkerEdgeColor = 'y';
     pointProps.MarkerFaceColor = 'y';
-    drawPoint3d(SP(1:3), pointProps)
-    text(SP(:,1), SP(:,2), SP(:,3), 'SP','FontWeight','bold',...
+    drawPoint3d(SacralPlane(1:3), pointProps)
+    text(SacralPlane(:,1), SacralPlane(:,2), SacralPlane(:,3), 'SP','FontWeight','bold',...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
     % Sacral plane
     patchProps.FaceColor = 'y';
-    drawPlane3d(SP,patchProps)
+    drawPlane3d(SacralPlane,patchProps)
 end
 
 end

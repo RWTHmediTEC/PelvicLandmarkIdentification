@@ -50,8 +50,8 @@ parse(parser,varargin{:});
 
 visu = parser.Results.visualization;
 
-% The pubic symphysis in is the origin of the coordinate system, if the 
-% mesh was transformed into the automatic pelvic coordiante system
+% The pubic symphysis (PS) in is the origin of the coordinate system, if 
+% the mesh was transformed into the automatic pelvic coordiante system
 PS = [0, 0, 0];
 
 % Check input mesh
@@ -116,9 +116,14 @@ end
 % Sacral plane (SP) detection
 switch LoP
     case 1
-        [SacralPromontory, SP, SM] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
     case 3
-        [SacralPromontory, SP, SM] = sacralPlateau3(pelvis(2), PSIS, visu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau3(pelvis(2), PSIS, visu);
+end
+% Check orientation of the sacral plane
+SacralPlaneNormal=planeNormal(SacralPlane);
+if SacralPlaneNormal(3)<0
+    SacralPlane=reversePlane(SacralPlane);
 end
 
 if visu
@@ -138,9 +143,9 @@ LM.ASIS = ASIS;
 LM.PSIS = PSIS;
 LM.AIIS = AIIS;
 LM.IS = IS;
-LM.SacralPlane = SP;
-LM.SacralPromontory = SacralPromontory;
-LM.SacralPlateau = SM;
+LM.SacralPlane = SacralPlane;
+LM.SP = SP;
+LM.SacralPlateau = SacralMesh;
 
 end
 
