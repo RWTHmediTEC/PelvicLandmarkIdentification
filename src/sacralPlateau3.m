@@ -91,7 +91,7 @@ curvature = abs(curvatureMax-curvatureMin);
 curvatureThreshold = 0.1; % Close to 0 [Beniere 2011].
 endCriteria = Inf; % See below
 % The curvature threshold is reduced while endCriteria is above X.
-while curvatureThreshold > 0.06 && endCriteria>2
+while curvatureThreshold > 0.06 && endCriteria>2.1
     % Vertices of flats
     flatsVerticesIdx = curvature<curvatureThreshold;
     % Faces with all three vertices part of flats
