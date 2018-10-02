@@ -10,7 +10,7 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %     region of the pubic symphisis, the algorithm won't work.
 %   - If faces are oriented inwards, the algorithm won't work.
 %   - The mesh has to consist of 1, 2 or 3 connected components (right hip,
-%     left hip and sacrum. Remove cavities and small isolated connected
+%     left hip and sacrum). Remove cavities and small isolated connected
 %     components at least for the hip bones otherwise the algorithm might 
 %     not work.
 % OPTIONAL INPUT:
@@ -36,8 +36,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.9
-% DATE: 2018-07-17
+% VERSION: 1.1.10
+% DATE: 2018-10-02
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -192,10 +192,15 @@ transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
 % Cut the mesh in four quadrants by the two planes
 % TO TEST: Maybe use biggest bounding box instead of most vertices
 [rightMesh, ~, leftMesh] = cutMeshByPlane(pelvisInertia, sagittalPlane);
+% Left proximal part
 quadrant(1) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','above');
+% Right proximal part
 quadrant(2) = cutMeshByPlane(rightMesh, transversePDPlane, 'part','above');
-quadrant(3) = splitMesh(cutMeshByPlane(leftMesh, transversePDPlane, 'part','below'),'mostVertices');
-quadrant(4) = splitMesh(cutMeshByPlane(rightMesh, transversePDPlane, 'part','below'),'mostVertices');
+% Left distal part
+quadrant(3) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','below');
+% Right distal part
+quadrant(4) = cutMeshByPlane(rightMesh, transversePDPlane, 'part','below');
+quadrant=checkDistalQuadrants(quadrant);
 
 if debugVisu
     appProps.Marker = 'o';
@@ -227,7 +232,8 @@ while ~all(all(abs(eye(3)-tempRot)<eps))
         APPPatch.vertices=[PS; ASIS(1,:); ASIS(2,:)];
         APPPatch.faces = [1 2 3];
         appHandle = patch(APPPatch, appProps);
-        delete([qHandle, appHandle])
+        ptHandle = scatter3(PT(:,1),PT(:,2),PT(:,3),'k','filled');
+        delete([qHandle, appHandle,ptHandle])
     end
 end
 
@@ -344,7 +350,7 @@ end
 
 function [tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant)
 % Calculate the mid point of the minimal width of the pubic symphysis (MWPS)
-[dist, distIdx] = pdist2(quadrant(3).vertices,quadrant(4).vertices,'euclidean','Smallest',1);
+[dist, distIdx]= pdist2(quadrant(3).vertices,quadrant(4).vertices,'euclidean','Smallest',1);
 [~, minDistIdx]= min(dist);
 MWPS(1,:) = quadrant(3).vertices(distIdx(minDistIdx),:);
 MWPS(2,:) = quadrant(4).vertices(minDistIdx,:);
@@ -375,6 +381,55 @@ APP = createPlane(PS, ASIS(1,:), ASIS(2,:));
 tempRot(1,:) = normalizeVector3d(ASIS(2,:)-ASIS(1,:));
 tempRot(3,:) = normalizeVector3d(planeNormal(APP));
 tempRot(2,:) = normalizeVector3d(crossProduct3d(tempRot(3,:), tempRot(1,:)));
+end
+
+function quadrant = checkDistalQuadrants(quadrant)
+% Is the most anterior point of the distal quadrant cut off by sagittal plane?
+
+DistalComps_L = splitMesh(quadrant(3));
+% Component with most vertices
+[~,maxVertIdx_L] = max(arrayfun(@(x) size(x.vertices,1), DistalComps_L));
+% Components medial to the component with most vertices
+xMean_L = arrayfun(@(x) mean(x.vertices(:,1)), DistalComps_L);
+xMeanIdx_L = xMean_L > xMean_L(maxVertIdx_L);
+% Components anterior to the component with most vertices
+zMean_L = arrayfun(@(x) mean(x.vertices(:,3)), DistalComps_L);
+zMeanIdx_L = zMean_L > zMean_L(maxVertIdx_L);
+maxAntPntIdx_L=find(xMeanIdx_L & zMeanIdx_L);
+if isempty(maxAntPntIdx_L)
+    addAntPntComp_R=false;
+else
+    addAntPntComp_R=true;
+end
+DistalComps_R = splitMesh(quadrant(4));
+% Component with most vertices
+[~,maxVertIdx_R] = max(arrayfun(@(x) size(x.vertices,1), DistalComps_R));
+% Components medial to the component with most vertices
+xMean_R = arrayfun(@(x) mean(x.vertices(:,1)), DistalComps_R);
+xMeanIdx_R = xMean_R < xMean_R(maxVertIdx_R);
+% Components anterior to the component with most vertices
+zMean_R = arrayfun(@(x) mean(x.vertices(:,3)), DistalComps_R);
+zMeanIdx_R = zMean_R > zMean_R(maxVertIdx_R);
+maxAntPntIdx_R=find(xMeanIdx_R & zMeanIdx_R);
+if isempty(maxAntPntIdx_R)
+    addAntPntComp_L=false;
+else
+    addAntPntComp_L=true;
+end
+
+if addAntPntComp_L
+    quadrant(3) = concatenateMeshes(...
+        DistalComps_L(maxVertIdx_L), DistalComps_R(maxAntPntIdx_R));
+else
+    quadrant(3) = DistalComps_L(maxVertIdx_L);
+end
+if addAntPntComp_R
+    quadrant(4) = concatenateMeshes(...
+        DistalComps_R(maxVertIdx_R), DistalComps_L(maxAntPntIdx_L));
+else
+    quadrant(4) = DistalComps_R(maxVertIdx_R);
+end
+
 end
 
 function zoomWithWheel(~,evnt)

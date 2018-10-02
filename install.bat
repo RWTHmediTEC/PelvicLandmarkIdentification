@@ -5,7 +5,7 @@ echo ------------------------
 echo[
 
 set LIBRARY_NAME=AutomaticPelvicCoordinateSystem
-set VERSION=1.1.9
+set VERSION=1.1.10
 
 if "%MATLAB_LIBS%" == "" (
     echo Error: The environment variable 'MATLAB_LIBS' is not set.
