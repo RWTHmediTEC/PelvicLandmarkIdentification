@@ -1,9 +1,13 @@
 function [SP, SacralPlane, SacralMesh] = sacralPlateau3(sacrum, PSIS, varargin)
 
-parser = inputParser;
-addOptional(parser,'visualization',true,@islogical);
-parse(parser,varargin{:});
-visu = parser.Results.visualization;
+% Parsing 
+p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
+addParameter(p,'visualization', false, logParValidFunc);
+addParameter(p,'debugVisu', false, logParValidFunc);
+parse(p,varargin{:});
+visu = logical(p.Results.visualization);
+debugVisu=logical(p.Results.debugVisu);
 
 if visu == true
     patchProps.EdgeColor = 'k';
@@ -44,13 +48,12 @@ while isnan(spIdx) && ~isempty(tempMesh.vertices)
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
-%     % For Debugging
-%     if visu == true
-%         patchProps.EdgeColor='k';
-%         tempHandle(1) = patch(tempMesh, patchProps);
-%         tempHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
-%         delete(tempHandle)
-%     end
+    if debugVisu && visu
+        patchProps.EdgeColor='k';
+        debugHandle(1) = patch(tempMesh, patchProps);
+        debugHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
+        delete(debugHandle)
+    end
     if ~ismember(tempYmaxIdx, tempBoundary)
         % If max. y-direction vertex is not on the boundary, it's the SP
         spIdx = tempYmaxIdx;
@@ -66,16 +69,18 @@ SP = tempMesh.vertices(spIdx,:);
 distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
-if visu == true
+if visu
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
     drawPoint3d(SP, pointProps)
-%     % For Debugging
-%     patchProps.EdgeColor = 'k';
-%     patch(tempMesh, patchProps)
-%     drawPlane3d(distTransversePlane)
-%     drawPlane3d(rightSagittalPlane)
-%     drawPlane3d(leftSagittalPlane)
+end
+if debugVisu && visu
+    patchProps.EdgeColor = 'k';
+    debugHandle(1)=patch(tempMesh, patchProps);
+    debugHandle(2)=drawPlane3d(distTransversePlane);
+    debugHandle(3)=drawPlane3d(rightSagittalPlane);
+    debugHandle(4)=drawPlane3d(leftSagittalPlane);
+    delete(debugHandle)
 end
 
 % Calculate the curvature of the temporary mesh (proximal part of the sacrum)
@@ -167,46 +172,47 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
     % Reduce the curvature threshold:
     curvatureThreshold = curvatureThreshold-0.01;
         
-%     % For Debugging
-%     if visu == true
-%         % Properties for the visualization of the curvature
-%         curvatureProps.FaceVertexCData = curvature;
-%         curvatureProps.FaceColor = 'flat';
-%         curvatureProps.EdgeColor = 'none';
-%         curvatureProps.FaceAlpha = 0.6;
-%         curvatureProps.EdgeLighting = 'gouraud';
-%         curvatureProps.FaceLighting = 'gouraud';
-%         tempHandle(1) = patch('vertices', tempMesh.vertices, 'faces', ...
-%             tempMesh.faces(flatsFacesIdx,:), curvatureProps);
-%         patchProps.EdgeColor = 'none';
-%         tempHandle(2) = patch('vertices', tempMesh.vertices, 'faces', ...
-%             tempMesh.faces(~flatsFacesIdx,:), patchProps);
-%         patchProps.EdgeColor = 'k';
-%         if ~isempty(flatsMesh)
-%             tempHandle(3) = patch(flatsMesh,patchProps);
-%         end
-%         delete(tempHandle)
-%     end
+    if debugVisu && visu
+        % Properties for the visualization of the curvature
+        curvatureProps.FaceVertexCData = curvature;
+        curvatureProps.FaceColor = 'flat';
+        curvatureProps.EdgeColor = 'none';
+        curvatureProps.FaceAlpha = 0.6;
+        curvatureProps.EdgeLighting = 'gouraud';
+        curvatureProps.FaceLighting = 'gouraud';
+        debugHandle(1) = patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(flatsFacesIdx,:), curvatureProps);
+        patchProps.EdgeColor = 'none';
+        debugHandle(2) = patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(~flatsFacesIdx,:), patchProps);
+        patchProps.EdgeColor = 'k';
+        if ~isempty(flatsMesh)
+            debugHandle(3) = patch(flatsMesh,patchProps);
+        end
+        delete(debugHandle)
+    end
 end
 
 SacralMesh = flatsMesh;
 
-if visu == true
-%     % For Debugging
-%     % Properties for the visualization of the curvature
-%     curvatureProps.FaceVertexCData = curvature;
-%     curvatureProps.FaceColor = 'flat';
-%     curvatureProps.EdgeColor = 'none';
-%     curvatureProps.FaceAlpha = 0.6;
-%     curvatureProps.EdgeLighting = 'gouraud';
-%     curvatureProps.FaceLighting = 'gouraud';
-%     % Flats
-%     patch('vertices', tempMesh.vertices, 'faces', ...
-%         tempMesh.faces(flatsFacesIdx,:), curvatureProps);
-%     % Proximal part of the sacrum without flats
-%     patchProps.EdgeColor = 'none';
-%     patch('vertices', tempMesh.vertices, 'faces', ...
-%         tempMesh.faces(~flatsFacesIdx,:), patchProps);
+if visu
+    if debugVisu
+        % Properties for the visualization of the curvature
+        curvatureProps.FaceVertexCData = curvature;
+        curvatureProps.FaceColor = 'flat';
+        curvatureProps.EdgeColor = 'none';
+        curvatureProps.FaceAlpha = 0.6;
+        curvatureProps.EdgeLighting = 'gouraud';
+        curvatureProps.FaceLighting = 'gouraud';
+        % Flats
+        debugHandle(1)=patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(flatsFacesIdx,:), curvatureProps);
+        % Proximal part of the sacrum without flats
+        patchProps.EdgeColor = 'none';
+        debugHandle(2)=patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(~flatsFacesIdx,:), patchProps);
+        delete(debugHandle)
+    end
     % Sacral plateau
     patchProps.FaceColor = 'none';
     patchProps.EdgeColor = 'k';

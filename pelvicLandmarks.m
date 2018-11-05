@@ -11,6 +11,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %       example (lambda = 0.7, mu = -0.67, steps = 200). See the function: 
 %       optimizeMesh.m
 %   ASIS = Anterior Superior Iliac Spines: 2x3 matrix with xyz-coordinates
+%       Use the function: automaticPelvicCS.m
 %
 % OPTIONAL INPUT:
 %   visualization: true (default) or false
@@ -32,36 +33,39 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %       system for three-dimensional bone models of the lower extremities:
 %       Pelvis, femur, and tibia [Kai 2014]
 %
-%   TO-DO / IDEAS:
+%   TODO / IDEAS:
 %   Parse & validate inputs
 %   Clean up & standardize code
-%   Add debug visualization
+%   Remove or update the landmark1.m functions
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.0
-% DATE: 2017-02-02
+% VERSION: 1.0.1
+% DATE: 2018-11-05
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
-parser = inputParser;
-addOptional(parser,'visualization',true,@islogical);
-parse(parser,varargin{:});
+% Parsing 
+p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
+addParameter(p,'visualization', false, logParValidFunc);
+addParameter(p,'debugVisu', false, logParValidFunc);
+parse(p,varargin{:});
+visu = logical(p.Results.visualization);
+debugVisu=logical(p.Results.debugVisu);
 
-visu = parser.Results.visualization;
-
-% The pubic symphysis (PS) in is the origin of the coordinate system, if 
-% the mesh was transformed into the automatic pelvic coordiante system
+% The pubic symphysis (PS) is the origin of the coordinate system if the
+% mesh was transformed into the automatic pelvic coordiante system.
 PS = [0, 0, 0];
 
 % Check input mesh
 pelvis = splitMesh(pelvis);
-LoP = length(pelvis);
-if LoP == 3
+NoP = length(pelvis);
+if NoP == 3
     xMeans = arrayfun(@(x) mean(x.vertices(:,1)), pelvis);
     [~, ascIdx]=sort(xMeans);
     pelvis=pelvis(ascIdx);
-elseif LoP == 2 || LoP > 3
+elseif NoP == 2 || NoP > 3
     error('Invalid number of components in pelvis')
 end
 
@@ -90,35 +94,35 @@ end
 %% Landmark detection
 
 % Posterior superior iliac spine (PSIS)
-switch LoP
+switch NoP
     case 1
         PSIS = posteriorSuperiorIliacSpine1(pelvis,visu);
     case 3
-        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, visu);
+        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, 'visu', visu, 'debugVisu', debugVisu);
 end
 
 % Ischial spine (IS) detection
-switch LoP
+switch NoP
     case 1
-        IS = ischialSpine(pelvis, ASIS, visu);
+        IS = ischialSpine(pelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
     case 3
-        IS = ischialSpine(concatenateMeshes(pelvis([1,3])), ASIS, visu);
+        IS = ischialSpine(concatenateMeshes(pelvis([1,3])), ASIS, 'visu',visu, 'debugVisu',debugVisu);
 end
 
 % Anterior inferior iliac spine (AIIS) detection
-switch LoP
+switch NoP
     case 1
-        AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, visu);
+        AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, 'visu',visu, 'debugVisu',debugVisu);
     case 3
-        AIIS = anteriorInferiorIliacSpine(concatenateMeshes(pelvis([1,3])), ASIS, IS, visu);
+        AIIS = anteriorInferiorIliacSpine(concatenateMeshes(pelvis([1,3])), ASIS, IS, 'visu',visu, 'debugVisu',debugVisu);
 end
 
 % Sacral plane (SP) detection
-switch LoP
+switch NoP
     case 1
         [SP, SacralPlane, SacralMesh] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
     case 3
-        [SP, SacralPlane, SacralMesh] = sacralPlateau3(pelvis(2), PSIS, visu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau3(pelvis(2), PSIS, 'visu',visu, 'debugVisu',debugVisu);
 end
 % Check orientation of the sacral plane
 SacralPlaneNormal=planeNormal(SacralPlane);
@@ -130,7 +134,7 @@ if visu
     medicalViewButtons('RAS')
 end
 
-switch LoP
+switch NoP
     case 1
         
     case 3

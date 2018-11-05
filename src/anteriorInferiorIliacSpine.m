@@ -1,10 +1,14 @@
 function AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, varargin)
 % Anterior inferior iliac spine (AIIS) detection
 
-parser = inputParser;
-addOptional(parser,'visualization',true,@islogical);
-parse(parser,varargin{:});
-visu = parser.Results.visualization;
+% Parsing 
+p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
+addParameter(p,'visualization', false, logParValidFunc);
+addParameter(p,'debugVisu', false, logParValidFunc);
+parse(p,varargin{:});
+visu = logical(p.Results.visualization);
+debugVisu=logical(p.Results.debugVisu);
 
 % Frontal plane to keep only the anterior part of the mesh
 frontalPlane = [0 mean(IS(:,2)) 0 1 0 0 0 0 -1];
@@ -71,12 +75,11 @@ for s=1:2
             [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
             
             if ~isempty(tempYmaxIdx)
-%                 % For Debugging
-%                 if visu == true
-%                     tempHandle(1) = patch(tempMesh, patchProps);
-%                     tempHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
-%                     delete(tempHandle)
-%                 end
+                if debugVisu && visu
+                    debugHandle(1) = patch(tempMesh, patchProps);
+                    debugHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
+                    delete(debugHandle)
+                end
                 % If max. y-direction vertex is not on the boundary, it is the AIIS
                 if ~ismember(tempYmaxIdx, tempBoundary)
                     tempVertices = transformPoint3d(tempMesh.vertices, inv(xRot));
@@ -93,7 +96,7 @@ for s=1:2
     end
 end
 
-if visu == true
+if visu
     drawPoint3d(AIIS, pointProps)
     text(AIIS(:,1), AIIS(:,2), AIIS(:,3), 'AIIS','FontWeight','bold',...
         'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
