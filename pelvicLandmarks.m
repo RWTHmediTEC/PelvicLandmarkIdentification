@@ -40,8 +40,8 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.0.1
-% DATE: 2018-11-05
+% VERSION: 1.0.2
+% DATE: 2019-01-07
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 
