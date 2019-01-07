@@ -96,9 +96,9 @@ end
 % Posterior superior iliac spine (PSIS)
 switch NoP
     case 1
-        PSIS = posteriorSuperiorIliacSpine1(pelvis,visu);
+        PSIS = posteriorSuperiorIliacSpine1(pelvis, visu);
     case 3
-        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, 'visu', visu, 'debugVisu', debugVisu);
+        PSIS = posteriorSuperiorIliacSpine3(pelvis, 'visu',visu, 'debugVisu',debugVisu);
 end
 
 % Ischial spine (IS) detection

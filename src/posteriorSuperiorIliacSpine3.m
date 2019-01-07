@@ -1,4 +1,4 @@
-function PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, varargin)
+function PSIS = posteriorSuperiorIliacSpine3(pelvis, varargin)
 % Posterior superior iliac spine (PSIS)
 
 % Parsing 
