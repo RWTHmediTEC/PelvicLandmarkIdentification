@@ -1,4 +1,4 @@
-function PSIS = posteriorSuperiorIliacSpine3(pelvis, varargin)
+function PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, varargin)
 % Posterior superior iliac spine (PSIS)
 
 % Parsing 
@@ -16,10 +16,53 @@ pointProps.Marker = 'o';
 pointProps.MarkerEdgeColor = 'r';
 pointProps.MarkerFaceColor = 'r';
 
+% Plane properties
+planeProps.Marker = 'o';
+planeProps.MarkerEdgeColor = 'y';
+planeProps.MarkerFaceColor = 'y';
+planeProps.FaceColor = 'y';
+planeProps.FaceAlpha = 0.75;
+planeProps.EdgeColor = 'k';
+
 % Split the pelvis in left and right hip bone
 proxPelvis(1) = pelvis(1); % left hip bone 
 proxPelvis(2) = pelvis(3); % right hip bone
 
+% Calculate the SISP and rotate the mesh into the SISP until the rotation
+% vanishes and converges to: tempRot == eye(3).
+[tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu);
+% The product of all temporary rotations is the target rotation: targetRot
+targetRot = tempRot;
+while ~all(all(abs(eye(3)-tempRot)<eps*100))
+    proxPelvis=arrayfun(@(x) transformPoint3d(x, tempRot), proxPelvis);
+    [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu);
+    targetRot = tempRot*targetRot;
+    if debugVisu
+        patchProps.FaceColor = 'b';
+        patchProps.EdgeColor = 'none';
+        patchProps.EdgeColor = 'none';
+        qHandle = arrayfun(@(x) patch(x, patchProps), proxPelvis);
+        PSISmidPoint=midPoint3d(PSIS(1,:),PSIS(2,:));
+        SISPPatch.vertices=[ASIS(1,:); PSISmidPoint; ASIS(2,:)];
+        SISPPatch.faces = [1 2 3];
+        sispHandle = patch(SISPPatch, planeProps);
+        ptHandle = scatter3(PSIS(:,1),PSIS(:,2),PSIS(:,3),'y','filled');
+        delete([qHandle, sispHandle,ptHandle])
+    end
+end
+
+PSIS = transformPoint3d(PSIS, inv(targetRot));
+
+%% Visualization
+if visu
+    drawPoint3d(PSIS, pointProps)
+    text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
+        'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+
+end
+
+function [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu)
 % Osteophytes or bridging at the PIIS could be detected as PSIS landmark.
 % For this reason, the size of the z-component of the PSIS vector is
 % limited. This method does not work if both PIIS regions are affected!
@@ -81,11 +124,14 @@ while abs(PSISvector(3)) > MAX_Z_COMPONENT && zCut<superiorBoundary
     end
 end
 
-%% Visualization
-if visu
-    drawPoint3d(PSIS, pointProps)
-    text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
-        'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
-end
+% Mid point of the PSIS points
+PSISmidPoint=midPoint3d(PSIS(1,:),PSIS(2,:));
 
+% Superior iliac spine plane (SISP)
+SISP = createPlane(ASIS(1,:), PSISmidPoint, ASIS(2,:));
+
+% Temporary rotation matrix
+tempRot(1,:) = normalizeVector3d(ASIS(2,:)-ASIS(1,:));
+tempRot(3,:) = normalizeVector3d(planeNormal(SISP));
+tempRot(2,:) = normalizeVector3d(crossProduct3d(tempRot(3,:), tempRot(1,:)));
 end
