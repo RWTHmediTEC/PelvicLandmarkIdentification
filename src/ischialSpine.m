@@ -25,6 +25,7 @@ tempMesh = cutMeshByPlane(tempMesh, supTransversePlane,'part','above');
 
 tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
+% TODO: Use the two meshes with the biggest bounding box
 tempMesh(1)=tempMeshes(1);
 tempMesh(2)=tempMeshes(2);
 
@@ -47,18 +48,23 @@ if debugVisu && visu
     delete(debugHandles)
 end
 
-% Rotate from 90° to 135° in steps of 1°
-theta = linspace(1/2*pi, 3/4*pi, 45);
+% Rotate from 0° to 45° in steps of 1°
+theta = linspace(0, 1/4*pi, 45);
 % Preallocation
-zMinIdx=zeros(2,length(theta));
+tempPelvis=repmat(struct('vertices',[],'faces',[]),2,1);
+yMinIdx=zeros(2,length(theta));
 for t=1:length(theta)
     % Counterclockwise rotation around the x-axis
     xRot = createRotationOx(theta(t));
     for s=1:2
         % Rotate the mesh around the x-axis
-        tempVertices = transformPoint3d(distPelvis(s).vertices, xRot);
-        % Get the most distal point of the rotated mesh for each rotation
-        [~, zMinIdx(s,t)] = min(tempVertices(:,3));
+        tempPelvis(s) = transformPoint3d(distPelvis(s), xRot);
+        % Get the most posterior point of the rotated mesh for each rotation
+        [~, yMinIdx(s,t)] = min(tempPelvis(s).vertices(:,2));
+    end
+    if debugVisu && visu
+        debugHandles=arrayfun(@(x) patch(x, patchProps), tempPelvis);
+        delete(debugHandles)
     end
 end
 
@@ -69,8 +75,8 @@ if debugVisu && visu
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
     debugHandles=drawPoint3d([...
-        distPelvis(1).vertices(zMinIdx(1,:),:); ...
-        distPelvis(2).vertices(zMinIdx(2,:),:)],pointProps);
+        distPelvis(1).vertices(yMinIdx(1,:),:); ...
+        distPelvis(2).vertices(yMinIdx(2,:),:)],pointProps);
     delete(debugHandles)
 end
 
@@ -79,7 +85,7 @@ cands=cell(2,1);
 candits=cell(2,1);
 for s=1:2
     % Get unique most posterior points
-    cands{s} = unique(distPelvis(s).vertices(zMinIdx(s,:),:),'rows');
+    cands{s} = unique(distPelvis(s).vertices(yMinIdx(s,:),:),'rows');
     % Add vertices within a given radius to most posterior points 
     for c=1:size(cands{s},1)
         candits{s} = [candits{s}; ...
