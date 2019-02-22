@@ -45,6 +45,9 @@ while isnan(spIdx) && ~isempty(tempMesh.vertices)
     cuttingFactor = cuttingFactor-0.1;
     tempMesh = cutMeshByPlane(tempMesh, rightSagittalPlane,'part','below');
     tempMesh = cutMeshByPlane(tempMesh, leftSagittalPlane,'part','above');
+    if tempReductionPlaneIdx == 0
+        meanMesh=tempMesh;
+    end
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
@@ -62,18 +65,20 @@ while isnan(spIdx) && ~isempty(tempMesh.vertices)
         [~, tempReductionPlaneIdx] = min(distancePoints3d(PSIS, tempMesh.vertices(tempYmaxIdx,:)));
     end
 end
-% Use the mean of the vertices for the x coordinate of the SP
-spIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);
-% Keep the part of the temporary mesh above the SaPro
+% Use the mean of the sacrum's vertices for the x coordinate of the SP
+spIdx = knnsearch(tempMesh.vertices, [mean(meanMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);
 SP = tempMesh.vertices(spIdx,:);
-distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
-tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
 if visu
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
     drawPoint3d(SP, pointProps)
 end
+
+% Keep the part of the temporary mesh above the SaPro
+distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
+tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
+
 if debugVisu && visu
     patchProps.EdgeColor = 'k';
     debugHandle(1)=patch(tempMesh, patchProps);
