@@ -37,13 +37,14 @@ if visu == true
 end
 
 % Preallocation
+THETA_STOP = 10;
 AIIS=nan(2,3);
 for s=1:2
     theta = 0;
     % As long as no AIIS point is found the temporary mesh is rotated in
     % counterclockwise direction around the x-axis in steps of 1° (max.
     % 10°) and the search is repeated.
-    while any(isnan(AIIS(s,:))) && theta <= 10
+    while any(isnan(AIIS(s,:))) && theta <= THETA_STOP
         tempMesh = AIISmesh(s);
         % Counterclockwise rotation around the x-axis
         xRot = createRotationOx(deg2rad(theta));
@@ -81,7 +82,7 @@ for s=1:2
                     delete(debugHandle)
                 end
                 % If max. y-direction vertex is not on the boundary, it is the AIIS
-                if ~ismember(tempYmaxIdx, tempBoundary)
+                if ~ismember(tempYmaxIdx, tempBoundary) || theta == THETA_STOP
                     tempVertices = transformPoint3d(tempMesh.vertices, inv(xRot));
                     AIIS(s,:) = tempVertices(tempYmaxIdx,:);
                 else

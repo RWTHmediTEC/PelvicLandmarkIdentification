@@ -72,7 +72,9 @@ PSISvector=[nan nan Inf];
 % Maximal absolute value of the z-component of the PSIS vector
 MAX_Z_COMPONENT =0.11;
 % The z-coordiate of the origin of the transverse cutting plane
-zCut = 0; % Start at the pubic symphysis (0)
+APPheight = projPointOnLine3d([0 0 0], createLine3d(ASIS(1,:), ASIS(2,:)));
+INFERIOR_CUT_FACTOR = 0.2;
+zCut = INFERIOR_CUT_FACTOR*APPheight(3);
 % Get the most superior point (MSP) of each hip bone
 MSP_Idx=nan(1,2);
 MSP=zeros(2,3);
