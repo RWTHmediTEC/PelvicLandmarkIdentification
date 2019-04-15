@@ -7,7 +7,7 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %   component with the fields: pelvis.vertices, pelvis.faces
 %   ATTENTION: 
 %   - If the mesh is connected between the right and the left hip in the 
-%     region of the pubic symphisis, the algorithm won't work.
+%     region of the pubic symphysis, the algorithm won't work.
 %   - If faces are oriented inwards, the algorithm won't work.
 %   - The mesh has to consist of 1, 2 or 3 connected components (right hip,
 %     left hip and sacrum). Remove cavities and small isolated connected
@@ -36,8 +36,8 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.10
-% DATE: 2018-10-02
+% VERSION: 1.1.11
+% DATE: 2019-04-15
 % LICENSE: Modified BSD License (BSD license with non-military-use clause)
 %
 
@@ -63,7 +63,7 @@ if debugVisu
     monitorsPosition = get(0,'MonitorPositions');
     FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
         'ToolBar','figure','WindowScrollWheelFcn',@zoomWithWheel,...
-        'WindowButtonDownFcn',@rotateWithLeftMouse);
+        'WindowButtonDownFcn',@rotateWithWheelClick);
     if     size(monitorsPosition,1) == 1
         set(FigHandle,'OuterPosition',monitorsPosition(1,:));
     elseif size(monitorsPosition,1) == 2
@@ -216,14 +216,14 @@ end
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
 % vanishes and converges to: tempRot == eye(3). Not described in [Kai 2014]
-[tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant);
+[tempRot, ASIS, PS, PT, MWPS] = anteriorPelvicPlane(quadrant);
 % The product of all temporary rotations is the target rotation: targetRot
 targetRot = tempRot;
 while ~all(all(abs(eye(3)-tempRot)<eps))
     for q=1:4
         quadrant(q).vertices=transformPoint3d(quadrant(q).vertices, tempRot);
     end
-    [tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant);
+    [tempRot, ASIS, PS, PT, MWPS] = anteriorPelvicPlane(quadrant);
     targetRot = tempRot*targetRot;
     if debugVisu
         patchProps.FaceColor = 'b';
@@ -260,6 +260,7 @@ TFM2APCS=TFMtargetRot2APCS*TFMinput2targetRot;
 CL_input.ASIS = transformPoint3d(ASIS, inv(TFMinput2targetRot));
 CL_input.PS   = transformPoint3d(  PS, inv(TFMinput2targetRot));
 CL_input.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
+CL_input.MWPS = transformPoint3d(MWPS, inv(TFMinput2targetRot));
 
 %% Visualization
 if visu == true
@@ -267,15 +268,15 @@ if visu == true
     monitorsPosition = get(0,'MonitorPositions');
     FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
         'ToolBar','none','WindowScrollWheelFcn',@zoomWithWheel,...
-        'WindowButtonDownFcn',@rotateWithLeftMouse);
+        'WindowButtonDownFcn',@rotateWithWheelClick);
     if     size(monitorsPosition,1) == 1
         set(FigHandle,'OuterPosition',monitorsPosition(1,:));
     elseif size(monitorsPosition,1) == 2
         set(FigHandle,'OuterPosition',monitorsPosition(2,:));
     end
     hold on
-    title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
-        'Scroll click - Rotate | Scroll - Zoom'})
+%     title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
+%         'Scroll click - Rotate | Scroll - Zoom'})
     cameratoolbar('SetCoordSys','none')
     axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
     lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
@@ -285,18 +286,24 @@ if visu == true
     CL_APCS.ASIS = transformPoint3d(ASIS, TFMtargetRot2APCS);
     CL_APCS.PS   = transformPoint3d(PS  , TFMtargetRot2APCS);
     CL_APCS.PT   = transformPoint3d(PT  , TFMtargetRot2APCS);
+    CL_APCS.MWPS = transformPoint3d(MWPS, TFMtargetRot2APCS);
     
     % Coordinate system
     Q.C = [1 0 0; 0 1 0; 0 0 1];
     ASISdist = distancePoints3d(CL_APCS.ASIS(1,:),CL_APCS.ASIS(2,:));
-    QDScaling = 1/8 * ASISdist;
+    QDScaling = 1/6 * ASISdist;
     Q.P = repmat([0, 0, 0], 3, 1);
     Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
     [~] = quiver3D(Q.P, Q.D, Q.C);
+    Q.D = 1.07*Q.D+1;
+    textProps.FontSize=14;
+    textProps.FontWeight='bold';
+    textHandle=text(Q.D(:,1),Q.D(:,2),Q.D(:,3), {'X', 'Y', 'Z'}, textProps);
+    [textHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
     
     % Patch properties
     patchProps.EdgeColor = 'none';
-    patchProps.FaceColor = [223, 206, 161]/255;
+    patchProps.FaceColor = [216, 212, 194]/255;
     patchProps.FaceAlpha = 1;
     patchProps.EdgeLighting = 'gouraud';
     patchProps.FaceLighting = 'gouraud';
@@ -308,19 +315,31 @@ if visu == true
     appProps.Marker = 'o';
     appProps.MarkerEdgeColor = 'y';
     appProps.MarkerFaceColor = 'y';
+    appProps.MarkerSize = 10;
     appProps.FaceColor = 'y';
     appProps.FaceAlpha = 0.75;
     appProps.EdgeColor = 'k';
+    appProps.EdgeLighting = 'gouraud';
+    appProps.FaceLighting = 'none';
     APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
     APPPatch.faces = [1 2 3];
     patch(APPPatch, appProps)
     
+    % Construction of pubic symphysis
+    edgeProps.Marker = 'none';
+    edgeProps.Color = 'k';
+    edgeProps.LineWidth = 2;
+    drawEdge3d(CL_APCS.MWPS(1,:), CL_APCS.MWPS(2,:), edgeProps)
+    drawEdge3d(CL_APCS.PS, midPoint3d(CL_APCS.MWPS(1,:), CL_APCS.MWPS(2,:)), edgeProps)
+    drawEdge3d(CL_APCS.PT(1,:), CL_APCS.PT(2,:), edgeProps)
+    
     % Pubic tubercle
     pointProps.Color='none';
     pointProps.Marker = 'o';
+    pointProps.MarkerSize = 10;
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
-    plot3(CL_APCS.PT(:,1),CL_APCS.PT(:,2),CL_APCS.PT(:,3),pointProps)
+    drawPoint3d(CL_APCS.PT,pointProps)
 end
 
 if resetPath
@@ -348,13 +367,12 @@ props.InertiaTFM =Rotation*createTranslation3d(-props.CoM);
 
 end
 
-function [tempRot, ASIS, PS, PT] = anteriorPelvicPlane(quadrant)
+function [tempRot, ASIS, PS, PT, MWPS] = anteriorPelvicPlane(quadrant)
 % Calculate the mid point of the minimal width of the pubic symphysis (MWPS)
 [dist, distIdx]= pdist2(quadrant(3).vertices,quadrant(4).vertices,'euclidean','Smallest',1);
 [~, minDistIdx]= min(dist);
 MWPS(1,:) = quadrant(3).vertices(distIdx(minDistIdx),:);
 MWPS(2,:) = quadrant(4).vertices(minDistIdx,:);
-MWPS_MidPoint = midPoint3d(MWPS(1,:), MWPS(2,:));
 
 % Calculate the most anterior point of each quadrant
 [~, AP_I] = arrayfun(@(x) max(x.vertices(:,3)), quadrant);
@@ -372,7 +390,7 @@ PT = mostAnteriorPoints(3:4,:);
 % [Kai 2014] uses the midpoint between the distal most anterior points.
 distalMAPLine = createLine3d(mostAnteriorPoints(3,:), mostAnteriorPoints(4,:));
 % Pubic symphysis (PS)
-PS = projPointOnLine3d(MWPS_MidPoint, distalMAPLine);
+PS = projPointOnLine3d(midPoint3d(MWPS(1,:), MWPS(2,:)), distalMAPLine);
 
 % Anterior pelvic plane
 APP = createPlane(PS, ASIS(1,:), ASIS(2,:));
@@ -448,7 +466,7 @@ end
     end
 end
 
-function rotateWithLeftMouse(src,~)
+function rotateWithWheelClick(src,~)
 if strcmp(get(src,'SelectionType'),'extend')
     cameratoolbar('SetMode','orbit')
 end
