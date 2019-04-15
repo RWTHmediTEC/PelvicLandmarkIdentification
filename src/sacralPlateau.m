@@ -1,14 +1,18 @@
-function [SP, SacralPlane, SacralMesh] = sacralPlateau1(pelvis, ASIS, PSIS, varargin)
+function [SP, SacralPlane, SacralMesh] = sacralPlateau(sacrum, PSIS, varargin)
 
-parser = inputParser;
-addOptional(parser,'visualization',true,@islogical);
-parse(parser,varargin{:});
-visu = parser.Results.visualization;
+% Parsing 
+p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
+addParameter(p,'visualization', false, logParValidFunc);
+addParameter(p,'debugVisu', false, logParValidFunc);
+parse(p,varargin{:});
+visu = logical(p.Results.visualization);
+debugVisu=logical(p.Results.debugVisu);
 
 if visu == true
-    patchProps.EdgeColor = 'k';
-    patchProps.FaceColor = [0.75 0.75 0.75];
-    patchProps.FaceAlpha = 0.5;
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [216, 212, 194]/255;
+    patchProps.FaceAlpha = 1;
     patchProps.EdgeLighting = 'gouraud';
     patchProps.FaceLighting = 'gouraud';
     
@@ -18,47 +22,50 @@ if visu == true
     pointProps.MarkerFaceColor = 'k';
 end
 
-% Sagittal plane
-sagittalPlane = [0 0 0 0 1 0 0 0 1];
-% Height of APP
-APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane);
-% Keep the part of the mesh above the ASIS points
-DIST_CUTTING_FACTOR = 0.9;
-distTransversePlane = [0 0 DIST_CUTTING_FACTOR*APPheight(3) 1 0 0 0 1 0];
-tempMesh = cutMeshByPlane(pelvis, distTransversePlane,'part','above');
-
 % Sacral Promontory (SP)
 % The SP has to be on the rim of the sacral plateau. While the SP is on the 
 % boundary of the cutted region, the region is reduced. If the region is 
 % empty, SP was not found.
 
 % Keep the medial part of the mesh between the PSIS points
+tempMesh=sacrum;
 cuttingFactor = 0.9;
 tempReductionPlaneIdx = 0;
 spIdx = NaN;
 while isnan(spIdx) && ~isempty(tempMesh.vertices)
-    rightSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
-    leftSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
+    rightSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
+    leftSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     % Reduce the region
     switch tempReductionPlaneIdx
         case 1
-            rightSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
+            rightSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
         case 2
-            leftSagittalPlane = [PSIS(2,1)*cuttingFactor 0 0 0 1 0 0 0 1];
+            leftSagittalPlane = [PSIS(1,1)*cuttingFactor 0 0 0 1 0 0 0 1];
     end
     cuttingFactor = cuttingFactor-0.1;
     tempMesh = cutMeshByPlane(tempMesh, rightSagittalPlane,'part','below');
     tempMesh = cutMeshByPlane(tempMesh, leftSagittalPlane,'part','above');
+    if tempReductionPlaneIdx == 0
+        tempMesh=splitMesh(tempMesh);
+        [~,yMinMeanIdx] = max(arrayfun(@(x) box3dVolume(boundingBox3d(x.vertices)), tempMesh));
+        tempMesh=tempMesh(yMinMeanIdx);
+        meanMesh=tempMesh;
+    end
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
-%     % For Debugging
-%     if visu == true
-%         patchProps.EdgeColor='k';
-%         tempHandle(1) = patch(tempMesh, patchProps);
-%         tempHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
-%         delete(tempHandle)
-%     end
+    if debugVisu && visu
+        debugHandle(1) = patch(tempMesh, patchProps);
+        pointProps.MarkerEdgeColor = 'r';
+        pointProps.MarkerFaceColor = 'r';
+        debugHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
+        planeProps.EdgeColor='k';
+        planeProps.FaceColor='w';
+        planeProps.FaceAlpha=0.3;
+        debugHandle(3)=drawPlane3d(rightSagittalPlane,planeProps);
+        debugHandle(4)=drawPlane3d(leftSagittalPlane,planeProps);
+        delete(debugHandle)
+    end
     if ~ismember(tempYmaxIdx, tempBoundary)
         % If max. y-direction vertex is not on the boundary, it's the SP
         spIdx = tempYmaxIdx;
@@ -67,23 +74,37 @@ while isnan(spIdx) && ~isempty(tempMesh.vertices)
         [~, tempReductionPlaneIdx] = min(distancePoints3d(PSIS, tempMesh.vertices(tempYmaxIdx,:)));
     end
 end
-% Use the mean of the vertices for the x coordinate of the SP
-spIdx = knnsearch(tempMesh.vertices, [mean(tempMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);																								 
-% Keep the part of the temporary mesh above the SP
+% Use the mean of the sacrum's vertices for the x coordinate of the SP
+spIdx = knnsearch(tempMesh.vertices, [mean(meanMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);
 SP = tempMesh.vertices(spIdx,:);
+
+if visu
+    pointProps.MarkerEdgeColor = 'b';
+    pointProps.MarkerFaceColor = 'b';
+    drawPoint3d(SP, pointProps)
+    text(SP(:,1), SP(:,2), SP(:,3), 'SP','FontWeight','bold',...
+        'FontSize',14,'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
+    
+    debugHandle(1) = patch(tempMesh, patchProps);
+    planeProps.EdgeColor='k';
+    planeProps.FaceColor='w';
+    planeProps.FaceAlpha=0.3;
+    debugHandle(2)=drawPlane3d(rightSagittalPlane,planeProps);
+    debugHandle(3)=drawPlane3d(leftSagittalPlane,planeProps);
+    delete(debugHandle)
+end
+
+% Keep the part of the temporary mesh above the SaPro
 distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
-if visu == true
-    pointProps.MarkerEdgeColor = 'k';
-    pointProps.MarkerFaceColor = 'k';
-    drawPoint3d(SP, pointProps)
-%     % For Debugging
-%     patchProps.EdgeColor = 'k';
-%     patch(tempMesh, patchProps)
-%     drawPlane3d(distTransversePlane)
-%     drawPlane3d(rightSagittalPlane)
-%     drawPlane3d(leftSagittalPlane)
+if debugVisu && visu
+    patchProps.EdgeColor = 'k';
+    debugHandle(1)=patch(tempMesh, patchProps);
+    debugHandle(2)=drawPlane3d(distTransversePlane);
+    debugHandle(3)=drawPlane3d(rightSagittalPlane);
+    debugHandle(4)=drawPlane3d(leftSagittalPlane);
+    delete(debugHandle)
 end
 
 % Calculate the curvature of the temporary mesh (proximal part of the sacrum)
@@ -99,7 +120,7 @@ curvature = abs(curvatureMax-curvatureMin);
 curvatureThreshold = 0.1; % Close to 0 [Beniere 2011].
 endCriteria = Inf; % See below
 % The curvature threshold is reduced while endCriteria is above X.
-while curvatureThreshold > 0.06 && endCriteria>2.5
+while curvatureThreshold > 0.06 && endCriteria>2.1
     % Vertices of flats
     flatsVerticesIdx = curvature<curvatureThreshold;
     % Faces with all three vertices part of flats
@@ -121,7 +142,7 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
     if ~isempty(flatsMesh)
         % Sum of all normals of each flat
         flatsNormal = cell2mat(arrayfun(@(x) normalizeVector3d(...
-            sum(faceNormal(x.vertices, x.faces), 1)), flatsMesh, 'Uni', 0));
+            sum(meshFaceNormals(x), 1)), flatsMesh, 'Uni', 0));
         
         % Keep flats with a positive y-direction of the normal
         posYnormalIdx = flatsNormal(:,2) >= 0;
@@ -144,8 +165,8 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
         % Get the distance between the centroid and sacral promontory
         flatsCenSaProDist = distancePoints3d(flatsCentroids, SP);
         % Keep flats with a CenSaProDist below the threshold
-        MAX_CEN_SAPRO_DIST = 40; % mm
-        tempIdx = flatsCenSaProDist < MAX_CEN_SAPRO_DIST;
+        MAX_CEN_SP_DIST = 40; % mm
+        tempIdx = flatsCenSaProDist < MAX_CEN_SP_DIST;
         flatsMesh = flatsMesh(tempIdx);
         flatsNormal = flatsNormal(tempIdx,:);
         flatsMeshArea = flatsMeshArea(tempIdx);
@@ -175,46 +196,47 @@ while curvatureThreshold > 0.06 && endCriteria>2.5
     % Reduce the curvature threshold:
     curvatureThreshold = curvatureThreshold-0.01;
         
-%     % For Debugging
-%     if visu == true
-%         % Properties for the visualization of the curvature
-%         curvatureProps.FaceVertexCData = curvature;
-%         curvatureProps.FaceColor = 'flat';
-%         curvatureProps.EdgeColor = 'none';
-%         curvatureProps.FaceAlpha = 0.6;
-%         curvatureProps.EdgeLighting = 'gouraud';
-%         curvatureProps.FaceLighting = 'gouraud';
-%         tempHandle(1) = patch('vertices', tempMesh.vertices, 'faces', ...
-%             tempMesh.faces(flatsFacesIdx,:), curvatureProps);
-%         patchProps.EdgeColor = 'none';
-%         tempHandle(2) = patch('vertices', tempMesh.vertices, 'faces', ...
-%             tempMesh.faces(~flatsFacesIdx,:), patchProps);
-%         patchProps.EdgeColor = 'k';
-%         if ~isempty(flatsMesh)
-%             tempHandle(3) = patch(flatsMesh,patchProps);
-%         end
-%         delete(tempHandle)
-%     end
+    if debugVisu && visu
+        % Properties for the visualization of the curvature
+        curvatureProps.FaceVertexCData = curvature;
+        curvatureProps.FaceColor = 'flat';
+        curvatureProps.EdgeColor = 'none';
+        curvatureProps.FaceAlpha = 0.6;
+        curvatureProps.EdgeLighting = 'gouraud';
+        curvatureProps.FaceLighting = 'gouraud';
+        debugHandle(1) = patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(flatsFacesIdx,:), curvatureProps);
+        patchProps.EdgeColor = 'none';
+        debugHandle(2) = patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(~flatsFacesIdx,:), patchProps);
+        patchProps.EdgeColor = 'k';
+        if ~isempty(flatsMesh)
+            debugHandle(3) = patch(flatsMesh,patchProps);
+        end
+        delete(debugHandle)
+    end
 end
 
 SacralMesh = flatsMesh;
 
-if visu == true
-%     % For Debugging
-%     % Properties for the visualization of the curvature
-%     curvatureProps.FaceVertexCData = curvature;
-%     curvatureProps.FaceColor = 'flat';
-%     curvatureProps.EdgeColor = 'none';
-%     curvatureProps.FaceAlpha = 0.6;
-%     curvatureProps.EdgeLighting = 'gouraud';
-%     curvatureProps.FaceLighting = 'gouraud';
-%     % Flats
-%     patch('vertices', tempMesh.vertices, 'faces', ...
-%         tempMesh.faces(flatsFacesIdx,:), curvatureProps);
-%     % Proximal part of the sacrum without flats
-%     patchProps.EdgeColor = 'none';
-%     patch('vertices', tempMesh.vertices, 'faces', ...
-%         tempMesh.faces(~flatsFacesIdx,:), patchProps);
+if visu
+    if debugVisu
+        % Properties for the visualization of the curvature
+        curvatureProps.FaceVertexCData = curvature;
+        curvatureProps.FaceColor = 'flat';
+        curvatureProps.EdgeColor = 'none';
+        curvatureProps.FaceAlpha = 0.6;
+        curvatureProps.EdgeLighting = 'gouraud';
+        curvatureProps.FaceLighting = 'gouraud';
+        % Flats
+        debugHandle(1)=patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(flatsFacesIdx,:), curvatureProps);
+        % Proximal part of the sacrum without flats
+        patchProps.EdgeColor = 'none';
+        debugHandle(2)=patch('vertices', tempMesh.vertices, 'faces', ...
+            tempMesh.faces(~flatsFacesIdx,:), patchProps);
+        delete(debugHandle)
+    end
     % Sacral plateau
     patchProps.FaceColor = 'none';
     patchProps.EdgeColor = 'k';
@@ -223,10 +245,11 @@ if visu == true
     pointProps.MarkerEdgeColor = 'y';
     pointProps.MarkerFaceColor = 'y';
     drawPoint3d(SacralPlane(1:3), pointProps)
-    text(SacralPlane(:,1), SacralPlane(:,2), SacralPlane(:,3), 'SP','FontWeight','bold',...
+    text(SacralPlane(:,1), SacralPlane(:,2), SacralPlane(:,3), 'SC','FontWeight','bold',...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
     % Sacral plane
     patchProps.FaceColor = 'y';
+    patchProps.FaceAlpha = 0.1;
     drawPlane3d(SacralPlane,patchProps)
 end
 

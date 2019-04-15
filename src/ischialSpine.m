@@ -20,8 +20,8 @@ supTransversePlane = [0 0 SUPERIOR_CUT_FACTOR*APPheight(3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(pelvis, supTransversePlane,'part','below');
 % Transverse plane of the inferior cut
 INFERIOR_CUT_VALUE = 0; % mm
-supTransversePlane = [0 0 INFERIOR_CUT_VALUE 1 0 0 0 1 0];
-tempMesh = cutMeshByPlane(tempMesh, supTransversePlane,'part','above');
+infTransversePlane = [0 0 INFERIOR_CUT_VALUE 1 0 0 0 1 0];
+tempMesh = cutMeshByPlane(tempMesh, infTransversePlane,'part','above');
 
 tempMeshes = flipud(splitMesh(tempMesh));
 % Use only the two biggest components of the distal part
@@ -39,13 +39,26 @@ else
 end
 
 if debugVisu && visu
-    patchProps.EdgeColor = 'k';
-    patchProps.FaceColor = [0.75 0.75 0.75];
-    patchProps.FaceAlpha = 0.5;
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [216, 212, 194]/255;
+    patchProps.FaceAlpha = 1;
     patchProps.EdgeLighting = 'gouraud';
     patchProps.FaceLighting = 'gouraud';
     debugHandles=arrayfun(@(x) patch(x, patchProps), distPelvis);
-    delete(debugHandles)
+    edgeProps.Marker = 'o';
+    edgeProps.MarkerFaceColor = 'k';
+    edgeProps.MarkerEdgeColor = 'k';
+    edgeProps.Color = 'k';
+    edgeProps.LineWidth = 2;
+    debugHandles(end+1)=drawEdge3d(ASIS(1,:),ASIS(2,:), edgeProps);
+    debugHandles(end+1)=drawEdge3d([0 0 0],midPoint3d([0 0 0],APPheight), edgeProps);
+    debugHandles(end+1)=drawEdge3d(APPheight, midPoint3d([0 0 0],APPheight), edgeProps);
+    planeProps.EdgeColor='k';
+    planeProps.FaceColor='w';
+    planeProps.FaceAlpha=0.3;
+    debugHandles(end+1)=drawPlane3d(supTransversePlane,planeProps);
+    debugHandles(end+1)=drawPlane3d(infTransversePlane,planeProps);
+    delete(debugHandles)    
 end
 
 % Rotate from 0° to 45° in steps of 1°
@@ -98,8 +111,9 @@ if debugVisu && visu
     % Visualize the candidates for IS
     pointProps.Linestyle = 'none';
     pointProps.Marker = 'o';
-    pointProps.MarkerEdgeColor = 'r';
-    pointProps.MarkerFaceColor = 'none';
+    pointProps.MarkerEdgeColor = 'none';
+    pointProps.MarkerFaceColor = 'k';
+    pointProps.MarkerSize = 2.5;
     debugHandles=cellfun(@(x) drawPoint3d(x,pointProps), candits);
     delete(debugHandles)
 end
@@ -116,7 +130,9 @@ if visu
     pointProps.Marker = 'o';
     pointProps.MarkerEdgeColor = 'm';
     pointProps.MarkerFaceColor = 'm';
+    pointProps.MarkerSize = 6;
     drawPoint3d(IS, pointProps)
-    text(IS(:,1), IS(:,2), IS(:,3), 'IS','FontWeight','bold',...
-        'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+    textHandle=text(IS(:,1), IS(:,2), IS(:,3), {'IS'},'FontWeight','bold',...
+        'FontSize',14,'VerticalAlignment', 'top');
+    [textHandle.HorizontalAlignment]=deal('left','right');
 end

@@ -72,8 +72,13 @@ end
 %% Visualization
 if visu
     % Surface of the pelvis
-    meshHandle = visualizeMeshes(pelvis);
-    set(meshHandle,'FaceAlpha',0.5)
+    meshProps.EdgeColor = 'none';
+    meshProps.FaceColor = [216, 212, 194]/255;
+    meshProps.FaceAlpha = 0.3;
+    meshProps.EdgeLighting = 'gouraud';
+    meshProps.FaceLighting = 'gouraud';
+    visualizeMeshes(pelvis, meshProps);
+    medicalViewButtons('RAS')
     
     % Point properties
     pointProps.Linestyle = 'none';
@@ -88,7 +93,7 @@ if visu
     % Pubic symphysis (PS)
     drawPoint3d(PS, pointProps)
     text(PS(:,1), PS(:,2), PS(:,3), 'PS','FontWeight','bold',...
-        'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 end
 
 %% Landmark detection
@@ -120,9 +125,9 @@ end
 % Sacral plane (SP) detection
 switch NoP
     case 1
-        [SP, SacralPlane, SacralMesh] = sacralPlateau1(pelvis, ASIS, PSIS, visu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(1), PSIS, 'visu',visu, 'debugVisu',debugVisu);
     case 3
-        [SP, SacralPlane, SacralMesh] = sacralPlateau3(pelvis(2), PSIS, 'visu',visu, 'debugVisu',debugVisu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(2), PSIS, 'visu',visu, 'debugVisu',debugVisu);
 end
 % Check orientation of the sacral plane
 SacralPlaneNormal=planeNormal(SacralPlane);
@@ -152,4 +157,3 @@ LM.SP = SP;
 LM.SacralPlateau = SacralMesh;
 
 end
-
