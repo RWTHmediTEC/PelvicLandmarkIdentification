@@ -1,4 +1,4 @@
-function PSIS = posteriorSuperiorIliacSpine(pelvis,varargin)
+function PSIS = posteriorSuperiorIliacSpine1(pelvis,varargin)
 % Posterior superior iliac spine (PSIS) % iliac crest (IC) detection
 
 parser = inputParser;
@@ -100,6 +100,8 @@ for s=1:2
     crestPts{s} = proxPelvis(s).vertices(yMaxIdx(s,LIdx),:);
     PSIS(s,:) = crestPts{s}(end,:);
 end
+
+PSIS=flipud(PSIS);
 
 %% Visualization
 if visu == true

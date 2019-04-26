@@ -132,7 +132,7 @@ if visu
     pointProps.MarkerFaceColor = 'm';
     pointProps.MarkerSize = 6;
     drawPoint3d(IS, pointProps)
-    textHandle=text(IS(:,1), IS(:,2), IS(:,3), {'IS'},'FontWeight','bold',...
+    textHandle=text(IS(:,1), IS(:,2), IS(:,3), 'IS','FontWeight','bold',...
         'FontSize',14,'VerticalAlignment', 'top');
     [textHandle.HorizontalAlignment]=deal('left','right');
 end

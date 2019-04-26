@@ -17,12 +17,15 @@ pointProps.MarkerEdgeColor = 'r';
 pointProps.MarkerFaceColor = 'r';
 
 % Plane properties
-planeProps.Marker = 'o';
-planeProps.MarkerEdgeColor = 'y';
-planeProps.MarkerFaceColor = 'y';
-planeProps.FaceColor = 'y';
-planeProps.FaceAlpha = 0.75;
-planeProps.EdgeColor = 'k';
+sispProps.Marker = 'o';
+sispProps.MarkerSize = 10;
+sispProps.MarkerEdgeColor = 'y';
+sispProps.MarkerFaceColor = 'y';
+sispProps.FaceColor = 'y';
+sispProps.FaceAlpha = 0.75;
+sispProps.EdgeColor = 'k';
+sispProps.EdgeLighting = 'gouraud';
+sispProps.FaceLighting = 'none';
 
 % Split the pelvis in left and right hip bone
 proxPelvis(1) = pelvis(1); % left hip bone 
@@ -40,12 +43,13 @@ while ~all(all(abs(eye(3)-tempRot)<eps*100))
     if debugVisu
         patchProps.FaceColor = 'b';
         patchProps.EdgeColor = 'none';
-        patchProps.EdgeColor = 'none';
+        patchProps.EdgeLighting = 'gouraud';
+        patchProps.FaceLighting = 'gouraud';
         qHandle = arrayfun(@(x) patch(x, patchProps), proxPelvis);
         PSISmidPoint=midPoint3d(PSIS(1,:),PSIS(2,:));
         SISPPatch.vertices=[ASIS(1,:); PSISmidPoint; ASIS(2,:)];
         SISPPatch.faces = [1 2 3];
-        sispHandle = patch(SISPPatch, planeProps);
+        sispHandle = patch(SISPPatch, sispProps);
         ptHandle = scatter3(PSIS(:,1),PSIS(:,2),PSIS(:,3),'y','filled');
         delete([qHandle, sispHandle,ptHandle])
     end
@@ -53,12 +57,49 @@ end
 
 PSIS = transformPoint3d(PSIS, inv(targetRot));
 
+
 %% Visualization
 if visu
     drawPoint3d(PSIS, pointProps)
-    text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
-        'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+    textHandle=text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
+        'FontSize',14, 'VerticalAlignment','bottom');
+    [textHandle.HorizontalAlignment]=deal('right','left');
 end
+
+if debugVisu
+    % Hip bones
+    patchProps.FaceColor = [216, 212, 194]/255;
+    debugHandles = arrayfun(@(x) patch(x, patchProps), pelvis([1,3]));
+    PSISmidPoint=midPoint3d(PSIS(1,:),PSIS(2,:));
+    % SISP
+    SISPPatch.vertices=[ASIS(1,:); PSISmidPoint; ASIS(2,:)];
+    debugHandles(end+1) = patch(SISPPatch, sispProps);
+    % PSIS line
+    edgeProps.Marker = 'o';
+    edgeProps.MarkerSize = 10;
+    edgeProps.MarkerEdgeColor = 'r';
+    edgeProps.MarkerFaceColor = 'r';
+    edgeProps.Color = 'k';
+    edgeProps.LineWidth = 2;
+    debugHandles(end+1) = drawEdge3d(PSIS(1,:),PSIS(2,:), edgeProps);
+    % Coordinate system
+    Q.C = [1 0 0; 0 1 0; 0 0 1];
+    ASISdist = distancePoints3d(ASIS(1,:),ASIS(2,:));
+    QDScaling = 1/6 * ASISdist;
+    Q.P = repmat(midPoint3d(ASIS(1,:),ASIS(2,:)), 3, 1);
+    Q.D(1,:) = normalizeVector3d(ASIS(1,:)-ASIS(2,:));
+    Q.D(3,:) = normalizeVector3d(meshFaceNormals(SISPPatch));
+    Q.D(2,:) = normalizeVector3d(crossProduct3d(Q.D(3,:), Q.D(1,:)));
+    Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
+    csHandles = quiver3D(Q.P, Q.D, Q.C);
+    csTextPos = Q.P+1.07*Q.D+1;
+    textProps.FontSize=14;
+    textProps.FontWeight='bold';
+    csTextHandle=text(csTextPos(:,1),csTextPos(:,2),csTextPos(:,3), {'X', 'Y', 'Z'}, textProps);
+    [csTextHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
+    delete([debugHandles;csHandles(:);csTextHandle])
+end
+
 
 end
 

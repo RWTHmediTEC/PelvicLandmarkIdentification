@@ -88,8 +88,9 @@ if visu
     
     % Anterior superior iliac spine (ASIS)
     drawPoint3d(ASIS, pointProps)
-    text(ASIS(:,1), ASIS(:,2), ASIS(:,3), 'ASIS','FontWeight','bold',...
-        'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
+    textHandle=text(ASIS(:,1), ASIS(:,2), ASIS(:,3), 'ASIS','FontWeight','bold',...
+        'FontSize',14,'VerticalAlignment', 'top');
+    [textHandle.HorizontalAlignment]=deal('right','left');
     % Pubic symphysis (PS)
     drawPoint3d(PS, pointProps)
     text(PS(:,1), PS(:,2), PS(:,3), 'PS','FontWeight','bold',...
