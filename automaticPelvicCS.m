@@ -295,10 +295,10 @@ if visu == true
     Q.P = repmat([0, 0, 0], 3, 1);
     Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
     [~] = quiver3D(Q.P, Q.D, Q.C);
-    Q.D = 1.07*Q.D+1;
+    textPos = Q.P+1.07*Q.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
-    textHandle=text(Q.D(:,1),Q.D(:,2),Q.D(:,3), {'X', 'Y', 'Z'}, textProps);
+    textHandle=text(textPos(:,1),textPos(:,2),textPos(:,3), {'X', 'Y', 'Z'}, textProps);
     [textHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
     
     % Patch properties
