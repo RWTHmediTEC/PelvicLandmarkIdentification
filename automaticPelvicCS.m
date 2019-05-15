@@ -42,10 +42,11 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 
 p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
-addParameter(p,'visualization',true,@islogical);
-addParameter(p,'debugVisu',false,@islogical);
-addParameter(p,'resetPath',false,@islogical);
+addParameter(p,'visualization',true,logParValidFunc);
+addParameter(p,'debugVisu',false,logParValidFunc);
+addParameter(p,'resetPath',false,logParValidFunc);
 parse(p,pelvis,varargin{:});
 
 pelvis = p.Results.pelvis;
@@ -61,13 +62,13 @@ addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
 if debugVisu
     % New figure
     monitorsPosition = get(0,'MonitorPositions');
-    FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
+    debugFig = figure('Units','pixels','renderer','opengl', 'Color','w',...
         'ToolBar','figure','WindowScrollWheelFcn',@zoomWithWheel,...
         'WindowButtonDownFcn',@rotateWithWheelClick);
     if     size(monitorsPosition,1) == 1
-        set(FigHandle,'OuterPosition',monitorsPosition(1,:));
+        set(debugFig,'OuterPosition',monitorsPosition(1,:));
     elseif size(monitorsPosition,1) == 2
-        set(FigHandle,'OuterPosition',monitorsPosition(2,:));
+        set(debugFig,'OuterPosition',monitorsPosition(2,:));
     end
     hold on
     cameratoolbar('SetCoordSys','none')
@@ -77,10 +78,15 @@ if debugVisu
     
     % Coordinate system
     Q.C = [1 0 0; 0 1 0; 0 0 1];
-    QDScaling = 20;
+    QDScaling = 40;
     Q.P = repmat([0, 0, 0], 3, 1);
     Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
     [~] = quiver3D(Q.P, Q.D, Q.C);
+    textPos = Q.P+1.07*Q.D+1;
+    textProps.FontSize=14;
+    textProps.FontWeight='bold';
+    textHandle=text(textPos(:,1),textPos(:,2),textPos(:,3), {'X', 'Y', 'Z'}, textProps);
+    [textHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
     
     % Patch properties
     patchProps.EdgeColor = 'none';
@@ -112,7 +118,7 @@ PW = distancePoints3d(pelvisInertia.vertices(PWminIdx,:),pelvisInertia.vertices(
 %     ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 if debugVisu
     % The pelvis in the inertia CS
-    patch(pelvisInertia, patchProps)
+    tempHandle(1)=patch(pelvisInertia, patchProps);
 end
 % Orientation checks:
 if pelvisInertia.vertices(PWminIdx,2) > 0 && pelvisInertia.vertices(PWmaxIdx,2) > 0
@@ -160,7 +166,8 @@ end
 if debugVisu
     patchProps.FaceColor = 'g';
     % The pelvis in the checked inertia system
-    patch(pelvisInertia, patchProps)
+    tempHandle(2)=patch(pelvisInertia, patchProps);
+    delete(tempHandle)
 end
 
 pelvicMaxWidth = createLine3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:));
@@ -180,11 +187,11 @@ tempVertices = pelvisInertia.vertices; tempVertices(tempVertices(:,1)<0,:)=0;
 distalPelvicWidth = createLine3d(pelvisInertia.vertices(PDWXNIdx,:), pelvisInertia.vertices(PDWXPIdx,:));
 
 % Calculate the height of the distal pelvic width
-pelvicDistalWidthHeight = intersectLinePlane(distalPelvicWidth, sagittalPlane);
+distalPelvicWidthHeight = intersectLinePlane(distalPelvicWidth, sagittalPlane);
 
 % Calculate the 2/3 point between the height of the maximal and distal
 % pelvic width. By contrast [Kai 2014] uses the midline (1/2 point).
-PDPoint = 2/3*(maxPelvicWidthHeight+pelvicDistalWidthHeight);
+PDPoint = 2/3*(maxPelvicWidthHeight+distalPelvicWidthHeight);
 
 % Define the temporary proximal-distal (PD) transverse plane
 transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
@@ -210,8 +217,32 @@ if debugVisu
     appProps.FaceAlpha = 0.75;
     appProps.EdgeColor = 'k';
     % The quadrants
-    patchProps.FaceColor = 'b';
+    patchProps.FaceAlpha = 1;
+    patchProps.FaceColor = [216, 212, 194]/255;
     arrayfun(@(x) patch(x, patchProps), quadrant)
+    % The planes
+    planeProps.FaceColor = [1 0 1];
+    planeProps.FaceAlpha = 0.5;
+    planeProps.EdgeColor = 'k';
+    drawPlane3d(transversePDPlane,planeProps)
+    planeProps.FaceColor = [0 0 0];
+    drawPlane3d(sagittalPlane,planeProps)
+    % Widths
+    edgeProps.Marker = 'o';
+    edgeProps.MarkerEdgeColor = 'y';
+    edgeProps.MarkerFaceColor = 'y';
+    edgeProps.Color = 'y';
+    edgeProps.LineWidth = 2;
+    drawEdge3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:), edgeProps)
+    edgeProps.MarkerEdgeColor = 'c';
+    edgeProps.MarkerFaceColor = 'c';
+    edgeProps.Color = 'c';
+    drawEdge3d(pelvisInertia.vertices(PDWXNIdx,:), pelvisInertia.vertices(PDWXPIdx,:), edgeProps)
+    edgeProps.MarkerEdgeColor = 'k';
+    edgeProps.MarkerFaceColor = 'k';
+    edgeProps.Color = 'k';
+    drawEdge3d(distalPelvicWidthHeight, projPointOnPlane(distalPelvicWidthHeight, transversePDPlane), edgeProps)
+    drawEdge3d(maxPelvicWidthHeight, projPointOnPlane(maxPelvicWidthHeight, transversePDPlane), edgeProps)
 end
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
@@ -262,17 +293,21 @@ CL_input.PS   = transformPoint3d(  PS, inv(TFMinput2targetRot));
 CL_input.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
 CL_input.MWPS = transformPoint3d(MWPS, inv(TFMinput2targetRot));
 
+if debugVisu
+    close(debugFig)
+end
+
 %% Visualization
 if visu == true
     % New figure
     monitorsPosition = get(0,'MonitorPositions');
-    FigHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
+    figHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
         'ToolBar','none','WindowScrollWheelFcn',@zoomWithWheel,...
         'WindowButtonDownFcn',@rotateWithWheelClick);
     if     size(monitorsPosition,1) == 1
-        set(FigHandle,'OuterPosition',monitorsPosition(1,:));
+        set(figHandle,'OuterPosition',monitorsPosition(1,:));
     elseif size(monitorsPosition,1) == 2
-        set(FigHandle,'OuterPosition',monitorsPosition(2,:));
+        set(figHandle,'OuterPosition',monitorsPosition(2,:));
     end
     hold on
 %     title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
