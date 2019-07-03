@@ -170,13 +170,15 @@ if debugVisu
     delete(tempHandle)
 end
 
-pelvicMaxWidth = createLine3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:));
-
 % Define the temporary sagittal plane
 sagittalPlane = [0 0 0 0 1 0 0 0 1];
 
+% Line between the most lateral points
+maxPelvicWidth = createLine3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:));
+
 % Calculate the height of the maximal pelvic width
-maxPelvicWidthHeight = intersectLinePlane(pelvicMaxWidth, sagittalPlane);
+maxPelvicWidthSagIts = intersectLinePlane(maxPelvicWidth, sagittalPlane);
+maxPelvicWidthHeight = maxPelvicWidthSagIts(2);
 
 % Define distal width of the pelvis as connection between the most distal
 % points of both sides. By contrast [Kai 2014] uses only one point.
@@ -187,17 +189,17 @@ tempVertices = pelvisInertia.vertices; tempVertices(tempVertices(:,1)<0,:)=0;
 distalPelvicWidth = createLine3d(pelvisInertia.vertices(PDWXNIdx,:), pelvisInertia.vertices(PDWXPIdx,:));
 
 % Calculate the height of the distal pelvic width
-distalPelvicWidthHeight = intersectLinePlane(distalPelvicWidth, sagittalPlane);
+distalPelvicWidthSagIts = intersectLinePlane(distalPelvicWidth, sagittalPlane);
+distalPelvicWidthHeight = distalPelvicWidthSagIts(2);
 
-% Calculate the 2/3 point between the height of the maximal and distal
-% pelvic width. By contrast [Kai 2014] uses the midline (1/2 point).
-PDPoint = 2/3*(maxPelvicWidthHeight+distalPelvicWidthHeight);
+% Calculate the midpoint between the height of the maximal and distal
+% pelvic width [Kai 2014].
+PDPoint = maxPelvicWidthHeight+1/2*(distalPelvicWidthHeight-maxPelvicWidthHeight);
 
 % Define the temporary proximal-distal (PD) transverse plane
-transversePDPlane = [0 PDPoint(2) 0 1 0 0 0 0 1];
+transversePDPlane = [0 PDPoint 0 1 0 0 0 0 1];
 
 % Cut the mesh in four quadrants by the two planes
-% TO TEST: Maybe use biggest bounding box instead of most vertices
 [rightMesh, ~, leftMesh] = cutMeshByPlane(pelvisInertia, sagittalPlane);
 % Left proximal part
 quadrant(1) = cutMeshByPlane(leftMesh, transversePDPlane, 'part','above');
@@ -241,8 +243,8 @@ if debugVisu
     edgeProps.MarkerEdgeColor = 'k';
     edgeProps.MarkerFaceColor = 'k';
     edgeProps.Color = 'k';
-    drawEdge3d(distalPelvicWidthHeight, projPointOnPlane(distalPelvicWidthHeight, transversePDPlane), edgeProps)
-    drawEdge3d(maxPelvicWidthHeight, projPointOnPlane(maxPelvicWidthHeight, transversePDPlane), edgeProps)
+    drawEdge3d(maxPelvicWidthSagIts, projPointOnPlane(maxPelvicWidthSagIts, transversePDPlane), edgeProps)
+    drawEdge3d(distalPelvicWidthSagIts, projPointOnPlane(distalPelvicWidthSagIts, transversePDPlane), edgeProps)  
 end
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
@@ -310,8 +312,8 @@ if visu == true
         set(figHandle,'OuterPosition',monitorsPosition(2,:));
     end
     hold on
-%     title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
-%         'Scroll click - Rotate | Scroll - Zoom'})
+    title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
+        'Scroll click - Rotate | Scroll - Zoom'})
     cameratoolbar('SetCoordSys','none')
     axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
     lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
@@ -441,6 +443,7 @@ function quadrant = checkDistalQuadrants(quadrant)
 
 DistalComps_L = splitMesh(quadrant(3));
 % Component with most vertices
+% TODO: Use the biggest bounding box instead of most vertices
 [~,maxVertIdx_L] = max(arrayfun(@(x) size(x.vertices,1), DistalComps_L));
 % Components medial to the component with most vertices
 xMean_L = arrayfun(@(x) mean(x.vertices(:,1)), DistalComps_L);
