@@ -102,7 +102,7 @@ end
 % Posterior superior iliac spine (PSIS)
 switch NoP
     case 1
-        PSIS = posteriorSuperiorIliacSpine1(pelvis, visu);
+        PSIS = posteriorSuperiorIliacSpine1(pelvis, 'visu',visu, 'debugVisu',debugVisu);
     case 3
         PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
 end
