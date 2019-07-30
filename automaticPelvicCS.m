@@ -3,16 +3,16 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %   anterior pelvic plane (APP)
 %
 % REQUIRED INPUT:
-%   pelvis: A mesh of the pelvis (hip bones and sacrum) consisting of one
-%   component with the fields: pelvis.vertices, pelvis.faces
+%   pelvis: A mesh of the pelvis (hip bones and sacrum) as a single struct 
+%   with the fields: pelvis.vertices, pelvis.faces
 %   ATTENTION: 
 %   - If the mesh is connected between the right and the left hip in the 
-%     region of the pubic symphysis, the algorithm won't work.
-%   - If faces are oriented inwards, the algorithm won't work.
-%   - The mesh has to consist of 1, 2 or 3 connected components (right hip,
-%     left hip and sacrum). Remove cavities and small isolated connected
-%     components at least for the hip bones otherwise the algorithm might 
-%     not work.
+%     region of the pubic symphysis, the algorithm will not work.
+%   - If faces are oriented inwards, the algorithm will not work.
+%   - The mesh has to consist of 1, 2 or 3 connected components (right hip
+%     bone, left hip bone and sacrum). Remove cavities and small isolated 
+%     connected components, at least for the hip bones, otherwise the  
+%     algorithm might not work.
 % OPTIONAL INPUT:
 %   'visualization': Visualization of the APCS. Default is true.
 %   'debugVisu': Additional visualization for debuging. Default is false.
