@@ -1,28 +1,35 @@
 function symPlane = symmetryPlane(pelvis,varargin)
 % Symmetry plane detection
 
-parser = inputParser;
-addOptional(parser,'visualization',true,@islogical);
-parse(parser,varargin{:});
-visu = parser.Results.visualization;
+% Parsing
+p = inputParser;
+logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
+addParameter(p,'visualization', false, logParValidFunc);
+addParameter(p,'debugVisu', false, logParValidFunc);
+parse(p,varargin{:});
+visu = logical(p.Results.visualization);
+debugVisu=logical(p.Results.debugVisu);
 
 % Define the sagittal plane
 sagittalPlane = [0 0 0 0 1 0 0 0 1];
 % Cut the plevic bone along the sagittal plane
 [proxPelvis(1), ~, proxPelvis(2)] = cutMeshByPlane(pelvis, sagittalPlane);
 
-% % For Debugging
-% if visu == true
-%     patchProps.EdgeColor = 'k';
-%     patchProps.FaceColor = [0.75 0.75 0.75];
-%     patchProps.FaceAlpha = 0.5;
-%     patchProps.EdgeLighting = 'gouraud';
-%     patchProps.FaceLighting = 'gouraud';
-%     arrayfun(@(x) patch(x, patchProps), proxPelvis)
-% end
+% For Debugging
+if debugVisu && visu
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [216, 212, 194]/255;
+    patchProps.FaceAlpha = 1;
+    patchProps.EdgeLighting = 'gouraud';
+    patchProps.FaceLighting = 'gouraud';
+    debugHandles = arrayfun(@(x) patch(x, patchProps), proxPelvis);
+    delete(debugHandles)
+end
 
 % Rotate from 0° to 360° in steps of 1°
-theta = linspace(0, 2*pi, 360);
+startAngle=0;
+stopAngle=360;
+theta = linspace(deg2rad(startAngle), deg2rad(stopAngle), stopAngle-startAngle);
 % Preallocation
 yMaxIdx=zeros(2,length(theta));
 sideSymX=zeros(1,length(theta));
@@ -62,23 +69,23 @@ symPoints = unique(symPoints, 'rows');
 
 symPlane = fitPlane(symPoints);
 
-%% Visualization
-% if visu == true
-%     % For Debugging
-%     % Visualize all point pairs 
-%     edgeProps.Linestyle = '-';
-%     edgeProps.Marker = 'o';
-%     edgeProps.Color = 'r';
-%     edgeProps.MarkerEdgeColor = 'r';
-%     edgeProps.MarkerFaceColor = 'r';
-%     drawEdge3d(tempEdges,edgeProps)
-% 
-%     pointProps.Linestyle = 'none';
-%     pointProps.Marker = 'o';
-%     pointProps.MarkerEdgeColor = 'k';
-%     pointProps.MarkerFaceColor = 'k';
-%     drawPoint3d(midPoints(sideSymXLIdx,:), pointProps);
-%     drawPlane3d(symPlane)
-% end
+if debugVisu && visu
+    % For Debugging
+    % Visualize all point pairs 
+    edgeProps.Linestyle = '-';
+    edgeProps.Marker = 'o';
+    edgeProps.Color = 'r';
+    edgeProps.MarkerEdgeColor = 'r';
+    edgeProps.MarkerFaceColor = 'r';
+    debugHandles=drawEdge3d(tempEdges,edgeProps);
+
+    pointProps.Linestyle = 'none';
+    pointProps.Marker = 'o';
+    pointProps.MarkerEdgeColor = 'k';
+    pointProps.MarkerFaceColor = 'k';
+    debugHandles(end+1)=drawPoint3d(midPoints(sideSymXLIdx,:), pointProps);
+    debugHandles(end+1)=drawPlane3d(symPlane);
+    delete(debugHandles)
+end
 
 end

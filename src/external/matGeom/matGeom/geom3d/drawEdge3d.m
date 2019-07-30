@@ -1,5 +1,5 @@
 function varargout = drawEdge3d(varargin)
-%DRAWEDGE3D Draw 3D edge in the current axes
+%DRAWEDGE3D Draw 3D edge in the current axes.
 %
 %   drawEdge3d(EDGE) draws the edge EDGE on the current axis. 
 %   EDGE has the form: [x1 y1 z1 x2 y2 z2]. No clipping is performed.
@@ -47,10 +47,11 @@ elseif nargin >= 6
 end
 
 % draw edges
-h = line(hAx,...
+h = line(...
     [edges(:, 1) edges(:, 4)]', ...
     [edges(:, 2) edges(:, 5)]', ...
-    [edges(:, 3) edges(:, 6)]', 'color', 'b');
+    [edges(:, 3) edges(:, 6)]', 'color', 'b', ...
+    'Parent', hAx);
     
 % apply optional drawing style
 if ~isempty(options)

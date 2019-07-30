@@ -13,15 +13,12 @@ debugVisu=logical(p.Results.debugVisu);
 % Point properties
 pointProps.Linestyle = 'none';
 pointProps.Marker = 'o';
-pointProps.MarkerEdgeColor = 'r';
-pointProps.MarkerFaceColor = 'r';
+pointProps.MarkerSize = 8;
+pointProps.MarkerEdgeColor = 'k';
+pointProps.MarkerFaceColor = 'k';
 
 % Plane properties
-sispProps.Marker = 'o';
-sispProps.MarkerSize = 10;
-sispProps.MarkerEdgeColor = 'y';
-sispProps.MarkerFaceColor = 'y';
-sispProps.FaceColor = 'y';
+sispProps.FaceColor = [255,165,0]/255;
 sispProps.FaceAlpha = 0.75;
 sispProps.EdgeColor = 'k';
 sispProps.EdgeLighting = 'gouraud';
@@ -60,10 +57,14 @@ PSIS = transformPoint3d(PSIS, inv(targetRot));
 
 %% Visualization
 if visu
-    drawPoint3d(PSIS, pointProps)
-    textHandle=text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
-        'FontSize',14, 'VerticalAlignment','bottom');
-    [textHandle.HorizontalAlignment]=deal('right','left');
+    pointProps.MarkerEdgeColor = 'r';
+    pointProps.MarkerFaceColor = 'r';
+%     drawPoint3d(PSIS, pointProps);
+    drawSphere(PSIS(1,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(PSIS(2,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
+    PSIS_textHandle=text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
+        'FontSize',16, 'VerticalAlignment','bottom','color','k');
+    [PSIS_textHandle.HorizontalAlignment]=deal('right','left');
 end
 
 if debugVisu
@@ -76,12 +77,18 @@ if debugVisu
     debugHandles(end+1) = patch(SISPPatch, sispProps);
     % PSIS line
     edgeProps.Marker = 'o';
-    edgeProps.MarkerSize = 10;
+    edgeProps.MarkerSize = 8;
     edgeProps.MarkerEdgeColor = 'r';
     edgeProps.MarkerFaceColor = 'r';
     edgeProps.Color = 'k';
     edgeProps.LineWidth = 2;
     debugHandles(end+1) = drawEdge3d(PSIS(1,:),PSIS(2,:), edgeProps);
+    pointProps.MarkerEdgeColor = 'k';
+    pointProps.MarkerFaceColor = 'k';
+    debugHandles(end+1) = drawPoint3d(PSISmidPoint, pointProps);
+    debugHandles(end+1) = text(PSISmidPoint(1), PSISmidPoint(2), PSISmidPoint(3), ...
+        'PSISs'' midpoint','FontWeight','bold','FontSize',14, 'Rotation',-24,...
+        'HorizontalAlignment', 'center', 'VerticalAlignment','bottom', 'Color','k');
     % Coordinate system
     Q.C = [1 0 0; 0 1 0; 0 0 1];
     ASISdist = distancePoints3d(ASIS(1,:),ASIS(2,:));
@@ -97,7 +104,19 @@ if debugVisu
     textProps.FontWeight='bold';
     csTextHandle=text(csTextPos(:,1),csTextPos(:,2),csTextPos(:,3), {'X', 'Y', 'Z'}, textProps);
     [csTextHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
-    delete([debugHandles;csHandles(:);csTextHandle])
+    
+%     % For publication
+%     [PSIS_textHandle.HorizontalAlignment]=deal('left','left');
+%     con_pelvis=concatenateMeshes(pelvis);
+%     set(gca,'CameraTarget',mean(con_pelvis.vertices));
+%     CamPos=[-0.2415    0.3897    0.8887]*norm(get(gca,'CameraPosition'));
+%     set(gca,'CameraPosition',CamPos);
+%     set(gca,'CameraUpVector',[0, 0, 1]);
+%     set(gca,'CameraViewAngle',4.5)
+%     set(gcf,'GraphicsSmoothing','off')
+%     export_fig('Figure4', '-tif', '-r300')
+    
+    delete(debugHandles);delete(csHandles);delete(csTextHandle);
 end
 
 

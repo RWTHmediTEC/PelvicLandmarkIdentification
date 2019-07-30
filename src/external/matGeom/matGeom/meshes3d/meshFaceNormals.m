@@ -1,5 +1,5 @@
-function normals = meshFaceNormals(vertices, faces)
-%MESHFACENORMALS Compute normal vector of faces in a 3D mesh
+function normals = meshFaceNormals(varargin)
+%MESHFACENORMALS Compute normal vector of faces in a 3D mesh.
 %
 %   NORMALS = meshFaceNormals(VERTICES, FACES)
 %   VERTICES is a set of 3D points (as a N-by-3 array), and FACES is either
@@ -34,11 +34,8 @@ function normals = meshFaceNormals(vertices, faces)
 % HISTORY
 % 2011-11-24 rename from faceNormal to meshFaceNormals
 
-% if input is given as a structure, parse fields
-if isstruct(vertices)
-    faces = vertices.faces;
-    vertices = vertices.vertices;
-end
+% parse input data
+[vertices, faces] = parseMeshData(varargin{:});
 
 if isnumeric(faces)
     % compute vector of first edges

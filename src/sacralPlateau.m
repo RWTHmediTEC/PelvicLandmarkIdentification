@@ -79,11 +79,13 @@ spIdx = knnsearch(tempMesh.vertices, [mean(meanMesh.vertices(:,1)), tempMesh.ver
 SP = tempMesh.vertices(spIdx,:);
 
 if visu
-    pointProps.MarkerEdgeColor = 'b';
-    pointProps.MarkerFaceColor = 'b';
-    drawPoint3d(SP, pointProps)
-    text(SP(:,1), SP(:,2), SP(:,3), 'SP','FontWeight','bold',...
-        'FontSize',14,'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
+    pointProps.MarkerEdgeColor = 'm';
+    pointProps.MarkerFaceColor = 'm';
+    pointProps.MarkerSize = 8;
+%     drawPoint3d(SP, pointProps)
+    drawSphere(SP,2.5, 'FaceColor','m', 'EdgeColor','none', 'FaceLighting','gouraud')
+    text(SP(:,1), SP(:,2), SP(:,3), 'SP','FontWeight','bold','Color','k',...
+        'FontSize',16,'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
     
     debugHandle(1) = patch(tempMesh, patchProps);
     planeProps.EdgeColor='k';
@@ -91,7 +93,23 @@ if visu
     planeProps.FaceAlpha=0.3;
     debugHandle(2)=drawPlane3d(rightSagittalPlane,planeProps);
     debugHandle(3)=drawPlane3d(leftSagittalPlane,planeProps);
-    delete(debugHandle)
+    boundEdges=outline(tempMesh.faces);
+    edgeProps.Marker='none';
+    edgeProps.LineStyle='-';
+    edgeProps.LineWidth=2;
+    edgeProps.Color=[255,192,203]/255; % pink
+    edgeHandles=drawEdge3d([tempMesh.vertices(boundEdges(:,1),:),...
+        tempMesh.vertices(boundEdges(:,2),:)],edgeProps);
+
+%     % For publication
+%     CamPos=[-0.0820    0.2139    0.9734]*norm(get(gca,'CameraPosition'));
+%     set(gca,'CameraPosition',CamPos);
+%     set(gca,'CameraUpVector',[0, 0, 1]);
+%     set(gca,'CameraViewAngle',5.5)
+%     set(gcf,'GraphicsSmoothing','off')
+%     export_fig('Figure6', '-tif', '-r300')
+    
+    delete([debugHandle,edgeHandles'])
 end
 
 % Keep the part of the temporary mesh above the SaPro
@@ -218,6 +236,11 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
 end
 
 SacralMesh = flatsMesh;
+% Check orientation of the sacral plane
+SacralPlaneNormal=planeNormal(SacralPlane);
+if SacralPlaneNormal(3)<0
+    SacralPlane=reversePlane(SacralPlane);
+end
 
 if visu
     if debugVisu

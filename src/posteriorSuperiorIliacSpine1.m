@@ -1,4 +1,4 @@
-function PSIS = posteriorSuperiorIliacSpine1(pelvis, varargin)
+function PSIS = posteriorSuperiorIliacSpine1(pelvis, ASIS, varargin)
 % Posterior superior iliac spine (PSIS) % iliac crest (IC) detection
 
 % Parsing 
@@ -16,7 +16,7 @@ sagittalPlane = [0 0 0 0 1 0 0 0 1];
 [proxPelvis(2), ~, proxPelvis(1)] = cutMeshByPlane(pelvis, sagittalPlane);
 
 % Detect the symmetry plane
-symPlane = symmetryPlane(pelvis,visu);
+symPlane = symmetryPlane(pelvis, 'visu',visu, 'debugVisu',debugVisu);
 symPlaneNormal = planeNormal(symPlane);
 if symPlaneNormal(1)<0
     symPlane(:, 7:9) = -symPlane(:, 7:9);
@@ -24,18 +24,17 @@ end
 proxPelvis(1) = cutMeshByPlane(proxPelvis(1), parallelPlane(symPlane, -10),'part','below');
 proxPelvis(2) = cutMeshByPlane(proxPelvis(2), parallelPlane(symPlane,  10),'part','above');
 
-
 if debugVisu && visu
-    patchProps.EdgeColor = 'k';
-    patchProps.FaceColor = [0.75 0.75 0.75];
-    patchProps.FaceAlpha = 0.5;
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [216, 212, 194]/255;
+    patchProps.FaceAlpha = 1;
     patchProps.EdgeLighting = 'gouraud';
     patchProps.FaceLighting = 'gouraud';
-    tempHandles = arrayfun(@(x) patch(x, patchProps), proxPelvis);
-    delete(tempHandles)
+    debugHandles = arrayfun(@(x) patch(x, patchProps), proxPelvis);
+    delete(debugHandles)
 end
 
-% Rotate from 0° to 270° in steps of 1°
+% Rotate from 0° to 180° in steps of 1°
 startAngle=0;
 stopAngle=180;
 theta = linspace(deg2rad(startAngle), deg2rad(stopAngle), stopAngle-startAngle);
@@ -73,7 +72,7 @@ for s=1:2
 end
 % Mean symmetry value in x-direction for the anterior part of the crest 
 % (Anterior part = ASIS to maximal z-direction)
-meanAnteriorSymX = mean(sideSymX(1:max(zMaxAllIdx(s))));
+meanAnteriorSymX = mean(sideSymX(1:max(zMaxAllIdx)));
 
 %% Exclusion process
 % Keep point pairs with a side distance above X * maximum side distance
@@ -108,27 +107,53 @@ for s=1:2
     PSIS(s,:) = crestPts{s}(end,:);
 end
 
-%% Visualization
-if visu == true
+% Cut out the posterior-proximal part of the iliac bones
+% Frontal plane 
+[~, maxZIdx] = max(pelvis.vertices(:,3));
+frontalPlane = [0 pelvis.vertices(maxZIdx,2) 0 0 0 1 1 0 0];
+tempMesh = cutMeshByPlane(pelvis, frontalPlane,'part','below');
+% Transverse plane
+TRANSVERSE_CUT_OFFSET = 10; % [mm]
+transversePlane = [0 0 min(PSIS(:,3))-TRANSVERSE_CUT_OFFSET 1 0 0 0 1 0];
+tempMesh = cutMeshByPlane(tempMesh, transversePlane,'part','above');
+% Sagittal planes
+SAGITTAL_CUT_OFFSET = 10; % [mm]
+leftSagittalPlane = [PSIS(1,1)+SAGITTAL_CUT_OFFSET 0 0 0 1 0 0 0 1];
+ppPelvis(1) = cutMeshByPlane(tempMesh, leftSagittalPlane,'part','below');
+rightSagittalPlane = [PSIS(2,1)-SAGITTAL_CUT_OFFSET 0 0 0 1 0 0 0 1];
+ppPelvis(3) = cutMeshByPlane(tempMesh, rightSagittalPlane,'part','above');
+
+if debugVisu && visu
     % Posterior superior iliac spine (PSIS)
-    pointProps.Linestyle = 'none';
     pointProps.Marker = 'o';
     pointProps.MarkerEdgeColor = 'r';
     pointProps.MarkerFaceColor = 'r';
-    drawPoint3d(PSIS, pointProps)
-    text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
-        'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
-    if debugVisu && visu
-        % Visualize all point pairs
-        edgeProps.Linestyle = '-';
-        edgeProps.Marker = 'o';
-        edgeProps.Color = 'r';
-        edgeProps.MarkerEdgeColor = 'r';
-        edgeProps.MarkerFaceColor = 'r';
-        tempEdges = [proxPelvis(1).vertices(yMaxIdx(1,:),:), ...
-            proxPelvis(2).vertices(yMaxIdx(2,:),:)];
-        drawEdge3d(tempEdges,edgeProps)
-    end
+    debugHandles = drawPoint3d(PSIS,pointProps);
+    PSIS_textHandle=text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS_{temp}','FontWeight','bold',...
+        'FontSize',14, 'VerticalAlignment','bottom','color','k');
+    [PSIS_textHandle.HorizontalAlignment]=deal('right','left');
+    debugHandles = [debugHandles;PSIS_textHandle];
+    % Visualize all point pairs
+    edgeProps.Linestyle = '-';
+    edgeProps.Marker = 'o';
+    edgeProps.Color = 'r';
+    edgeProps.MarkerEdgeColor = 'r';
+    edgeProps.MarkerFaceColor = 'none';
+    tempEdges = [proxPelvis(1).vertices(yMaxIdx(1,:),:), ...
+        proxPelvis(2).vertices(yMaxIdx(2,:),:)];
+    debugHandles=[debugHandles; drawEdge3d(tempEdges,edgeProps)];
+    delete(debugHandles)
+    % Visualize the posterior-proximal part of the iliac bones
+    patchProps.EdgeColor = 'none';
+    patchProps.FaceColor = [216, 212, 194]/255;
+    patchProps.FaceAlpha = 1;
+    patchProps.EdgeLighting = 'gouraud';
+    patchProps.FaceLighting = 'gouraud';
+    debugPatchHandles(1)=patch(ppPelvis(1), patchProps);
+    debugPatchHandles(2)=patch(ppPelvis(3), patchProps);
+    delete(debugPatchHandles)
 end
 
+% Take the posterior-proximal part of the iliac bones as input
+PSIS = posteriorSuperiorIliacSpine3(ppPelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
 end

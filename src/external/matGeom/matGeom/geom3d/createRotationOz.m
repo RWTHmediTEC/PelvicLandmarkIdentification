@@ -1,5 +1,5 @@
 function trans = createRotationOz(varargin)
-%CREATEROTATIONOZ Create the 4x4 matrix of a 3D rotation around z-axis
+%CREATEROTATIONOZ Create the 4x4 matrix of a 3D rotation around z-axis.
 %
 %   TRANS = createRotationOz(THETA);
 %   Returns the transform matrix corresponding to a rotation by the angle
@@ -21,8 +21,8 @@ function trans = createRotationOz(varargin)
 %   See also:
 %   transforms3d, transformPoint3d, createRotationOx, createRotationOy
 %
+
 %   ---------
-%
 %   author : David Legland 
 %   INRA - TPV URPOI - BIA IMASTE
 %   created the 06/04/2004.
@@ -40,22 +40,24 @@ dz = 0;
 theta = 0;
 
 % get input values
-if length(varargin)==1
-    % only angle
+if length(varargin) == 1
+    % only one argument -> rotation angle
     theta = varargin{1};
-elseif length(varargin)==2
+    
+elseif length(varargin) == 2
     % origin point (as array) and angle
     var = varargin{1};
     dx = var(1);
     dy = var(2);
     dz = var(3);
     theta = varargin{2};
-elseif length(varargin)==3
+    
+elseif length(varargin) == 4
     % origin (x and y) and angle
     dx = varargin{1};
     dy = varargin{2};
     dz = varargin{3};
-    theta = varargin{3};
+    theta = varargin{4};
 end
 
 % compute coefs
@@ -71,4 +73,4 @@ trans = [...
 
 % add the translation part
 t = [1 0 0 dx;0 1 0 dy;0 0 1 dz;0 0 0 1];
-trans = t*trans/t;
+trans = t * trans / t;
