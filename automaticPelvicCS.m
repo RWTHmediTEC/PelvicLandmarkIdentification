@@ -14,8 +14,9 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %     components at least for the hip bones otherwise the algorithm might 
 %     not work.
 % OPTIONAL INPUT:
-%   'visualization': true (default) or false
-%   resetPath: Resets the path to the inital state after the function was
+%   'visualization': Visualization of the APCS. Default is true.
+%   'debugVisu': Additional visualization for debuging. Default is false.
+%   'resetPath': Resets the path to the inital state after the function was
 %       called. Default is false.
 % 
 % OUTPUT:
@@ -36,9 +37,10 @@ function [TFM2APCS, CL_input] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.12
-% DATE: 2019-07-03
-% LICENSE: Modified BSD License (BSD license with non-military-use clause)
+% VERSION: 1.1.13
+% DATE: 2019-07-30
+% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% LICENSE: 
 %
 
 p = inputParser;
@@ -74,7 +76,7 @@ if debugVisu
     cameratoolbar('SetCoordSys','none')
     axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
     lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
-    view(90,0)
+    view(180,90)
     
     % Coordinate system
     Q.C = [1 0 0; 0 1 0; 0 0 1];
@@ -110,12 +112,12 @@ pelvisInertia = transformPoint3d(pelvis, inertiaTFM);
 PW = distancePoints3d(pelvisInertia.vertices(PWminIdx,:),pelvisInertia.vertices(PWmaxIdx,:));
 [~, MPPIdx] = min(pelvisInertia.vertices(:,3));
 
-% Orientation AFTER inertia transformation should be:
+% Orientation AFTER inertia transformation has to be:
 %     ________________________________________________________
 %     |    Axes    |      X      |      Y      |      Z      |
 %     |  Positive  |    Right    |   Inferior  |   Anterior  |
 %     |  Negative  |    Left     |   Superior  |  Posterior  |
-%     ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+%     |______________________________________________________|
 if debugVisu
     % The pelvis in the inertia CS
     tempHandle(1)=patch(pelvisInertia, patchProps);
@@ -198,6 +200,12 @@ PDPoint = maxPelvicWidthHeight+1/2*(distalPelvicWidthHeight-maxPelvicWidthHeight
 
 % Define the temporary proximal-distal (PD) transverse plane
 transversePDPlane = [0 PDPoint 0 1 0 0 0 0 1];
+% Check correct position of the PD transverse plane
+proximalEdge = [maxPelvicWidthSagIts, projPointOnPlane(maxPelvicWidthSagIts, transversePDPlane)];
+distalEdge = [distalPelvicWidthSagIts, projPointOnPlane(distalPelvicWidthSagIts, transversePDPlane)];
+assert(ismembertol(...
+    distancePoints3d(proximalEdge(1:3),proximalEdge(4:6)),...
+    distancePoints3d(distalEdge(1:3),distalEdge(4:6))));
 
 % Cut the mesh in four quadrants by the two planes
 [rightMesh, ~, leftMesh] = cutMeshByPlane(pelvisInertia, sagittalPlane);
@@ -231,9 +239,10 @@ if debugVisu
     drawPlane3d(sagittalPlane,planeProps)
     % Widths
     edgeProps.Marker = 'o';
-    edgeProps.MarkerEdgeColor = 'y';
-    edgeProps.MarkerFaceColor = 'y';
-    edgeProps.Color = 'y';
+    edgeProps.MarkerSize = 8;
+    edgeProps.MarkerEdgeColor = [150,75,0]/255;
+    edgeProps.MarkerFaceColor = [150,75,0]/255;
+    edgeProps.Color = [150,75,0]/255;
     edgeProps.LineWidth = 2;
     drawEdge3d(pelvisInertia.vertices(PWminIdx,:), pelvisInertia.vertices(PWmaxIdx,:), edgeProps)
     edgeProps.MarkerEdgeColor = 'c';
@@ -243,8 +252,17 @@ if debugVisu
     edgeProps.MarkerEdgeColor = 'k';
     edgeProps.MarkerFaceColor = 'k';
     edgeProps.Color = 'k';
-    drawEdge3d(maxPelvicWidthSagIts, projPointOnPlane(maxPelvicWidthSagIts, transversePDPlane), edgeProps)
-    drawEdge3d(distalPelvicWidthSagIts, projPointOnPlane(distalPelvicWidthSagIts, transversePDPlane), edgeProps)  
+    drawEdge3d(proximalEdge, edgeProps)
+    drawEdge3d(distalEdge, edgeProps)
+    
+%     % For publication
+%     set(gca,'CameraTarget',[0, 0, 0]);
+%     CamPos=[-0.3566   -0.1119    0.9275]*norm(get(gca,'CameraPosition'));
+%     set(gca,'CameraPosition',CamPos);
+%     set(gca,'CameraUpVector',[0, -1, 0]);
+%     set(gca,'CameraViewAngle',5)
+%     set(gcf,'GraphicsSmoothing','off')
+%     export_fig('Figure2', '-tif', '-r300')
 end
 
 % Calculate the APP and rotate the mesh into the APP until the rotation
@@ -275,7 +293,7 @@ end
 %     |    Axes    |      X      |      Y      |      Z      |
 %     |  Positive  |    Right    |   Anterior  |   Superior  |
 %     |  Negative  |    Left     |  Posterior  |   Inferior  |
-%     ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+%     |______________________________________________________|
 pelvicOrientation = [1 0 0 0; 0 0 1 0; 0, -1, 0 0; 0 0 0 1];
 % Position of the APCS origin: pubic symphysis (PS)
 pelvicPosition = [[eye(3), -PS']; [0 0 0 1]];
@@ -303,9 +321,10 @@ end
 if visu == true
     % New figure
     monitorsPosition = get(0,'MonitorPositions');
-    figHandle = figure('Units','pixels','renderer','opengl', 'Color','w',...
-        'ToolBar','none','WindowScrollWheelFcn',@zoomWithWheel,...
-        'WindowButtonDownFcn',@rotateWithWheelClick);
+    figHandle = figure('Units','pixels','renderer','opengl', 'Color','w');
+    figHandle.ToolBar = 'none';
+    figHandle.WindowScrollWheelFcn = @zoomWithWheel;
+    figHandle.WindowButtonDownFcn = @rotateWithWheelClick;
     if     size(monitorsPosition,1) == 1
         set(figHandle,'OuterPosition',monitorsPosition(1,:));
     elseif size(monitorsPosition,1) == 2
@@ -315,9 +334,13 @@ if visu == true
     title({'The pelvis in the automatic pelvic coordinate system (APCS)';...
         'Scroll click - Rotate | Scroll - Zoom'})
     cameratoolbar('SetCoordSys','none')
-    axis equal; axis on; xlabel('X'); ylabel('Y'); zlabel('Z');
+    axis equal; axis off; xlabel('X'); ylabel('Y'); zlabel('Z');
     lightHandle(1) = light; light('Position', -1*(get(lightHandle(1),'Position')));
     view(90,0)
+
+    % Point properties
+    pointProps.Color='none';
+    pointProps.Marker = 'o';
     
     % Landmarks in the APCS
     CL_APCS.ASIS = transformPoint3d(ASIS, TFMtargetRot2APCS);
@@ -349,10 +372,6 @@ if visu == true
     patch(transformPoint3d(pelvis, TFM2APCS), patchProps)
     
     % APP triangle
-    appProps.Marker = 'o';
-    appProps.MarkerEdgeColor = 'y';
-    appProps.MarkerFaceColor = 'y';
-    appProps.MarkerSize = 10;
     appProps.FaceColor = 'y';
     appProps.FaceAlpha = 0.75;
     appProps.EdgeColor = 'k';
@@ -361,6 +380,15 @@ if visu == true
     APPPatch.vertices=[CL_APCS.PS; CL_APCS.ASIS(1,:); CL_APCS.ASIS(2,:)];
     APPPatch.faces = [1 2 3];
     patch(APPPatch, appProps)
+    % ASISs
+    pointProps.MarkerSize = 10;
+    pointProps.MarkerEdgeColor = 'y';
+    pointProps.MarkerFaceColor = 'y';
+    drawPoint3d(CL_APCS.ASIS,pointProps)
+    % PS
+    pointProps.MarkerEdgeColor = 'b';
+    pointProps.MarkerFaceColor = 'b';
+    drawPoint3d(CL_APCS.PS,pointProps)
     
     % Construction of pubic symphysis
     edgeProps.Marker = 'none';
@@ -371,12 +399,31 @@ if visu == true
     drawEdge3d(CL_APCS.PT(1,:), CL_APCS.PT(2,:), edgeProps)
     
     % Pubic tubercle
-    pointProps.Color='none';
-    pointProps.Marker = 'o';
     pointProps.MarkerSize = 10;
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
     drawPoint3d(CL_APCS.PT,pointProps)
+    
+    % Text
+    textProps.Color='k';
+    text(CL_APCS.PS(1),CL_APCS.PS(2)+5,CL_APCS.PS(3)-5, {'PS'}, textProps);
+    text(CL_APCS.ASIS(1,1)+2,CL_APCS.ASIS(1,2),CL_APCS.ASIS(1,3)+1, {'ASIS'}, textProps,...
+        'HorizontalAlignment', 'Right', 'VerticalAlignment', 'bottom');
+    text(CL_APCS.ASIS(2,1)-2,CL_APCS.ASIS(2,2),CL_APCS.ASIS(2,3)+1, {'ASIS'}, textProps,...
+        'HorizontalAlignment', 'Left', 'VerticalAlignment', 'bottom');
+    textProps.Color='k';
+    text(CL_APCS.PT(1,1),CL_APCS.PT(1,2),CL_APCS.PT(1,3)-2, {'PT'}, textProps,...
+        'HorizontalAlignment', 'Center', 'VerticalAlignment', 'top');
+    text(CL_APCS.PT(2,1),CL_APCS.PT(2,2),CL_APCS.PT(2,3)-2, {'PT'}, textProps,...
+        'HorizontalAlignment', 'Center', 'VerticalAlignment', 'top');
+    
+%     % For publication
+%     CamPos=[-0.3493    0.8818    0.3168]*norm(get(gca,'CameraPosition'));
+%     set(gca,'CameraPosition',CamPos);
+%     set(gca,'CameraUpVector',[0, 0, 1]);
+%     set(gca,'CameraViewAngle',5.5)
+%     set(gcf,'GraphicsSmoothing','off')
+%     export_fig('Figure3', '-tif', '-r300')
 end
 
 if resetPath
@@ -442,13 +489,12 @@ function quadrant = checkDistalQuadrants(quadrant)
 % Is the most anterior point of the distal quadrant cut off by sagittal plane?
 
 DistalComps_L = splitMesh(quadrant(3));
-% Component with most vertices
-% TODO: Use the biggest bounding box instead of most vertices
-[~,maxVertIdx_L] = max(arrayfun(@(x) size(x.vertices,1), DistalComps_L));
-% Components medial to the component with most vertices
+% Component with largest bounding box
+[~,maxVertIdx_L] = max(arrayfun(@(x) box3dVolume(boundingBox3d(x.vertices)), DistalComps_L));
+% Components medial to the component with largest bounding box
 xMean_L = arrayfun(@(x) mean(x.vertices(:,1)), DistalComps_L);
 xMeanIdx_L = xMean_L > xMean_L(maxVertIdx_L);
-% Components anterior to the component with most vertices
+% Components anterior to the component with largest bounding box
 zMean_L = arrayfun(@(x) mean(x.vertices(:,3)), DistalComps_L);
 zMeanIdx_L = zMean_L > zMean_L(maxVertIdx_L);
 maxAntPntIdx_L=find(xMeanIdx_L & zMeanIdx_L);
@@ -458,12 +504,12 @@ else
     addAntPntComp_R=true;
 end
 DistalComps_R = splitMesh(quadrant(4));
-% Component with most vertices
-[~,maxVertIdx_R] = max(arrayfun(@(x) size(x.vertices,1), DistalComps_R));
-% Components medial to the component with most vertices
+% Component with largest bounding box
+[~,maxVertIdx_R] = max(arrayfun(@(x) box3dVolume(boundingBox3d(x.vertices)), DistalComps_R));
+% Components medial to the component with largest bounding box
 xMean_R = arrayfun(@(x) mean(x.vertices(:,1)), DistalComps_R);
 xMeanIdx_R = xMean_R < xMean_R(maxVertIdx_R);
-% Components anterior to the component with most vertices
+% Components anterior to the component with largest bounding box
 zMean_R = arrayfun(@(x) mean(x.vertices(:,3)), DistalComps_R);
 zMeanIdx_R = zMean_R > zMean_R(maxVertIdx_R);
 maxAntPntIdx_R=find(xMeanIdx_R & zMeanIdx_R);
