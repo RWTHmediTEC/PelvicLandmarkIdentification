@@ -3,13 +3,11 @@ function [SP, SacralPlane, SacralMesh] = sacralPlateau(sacrum, PSIS, varargin)
 % Parsing 
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
-if visu == true
+if debugVisu
     patchProps.EdgeColor = 'none';
     patchProps.FaceColor = [216, 212, 194]/255;
     patchProps.FaceAlpha = 1;
@@ -54,7 +52,7 @@ while isnan(spIdx) && ~isempty(tempMesh.vertices)
     % Get the indices of the boundary vertices
     tempBoundary = unique(outline(tempMesh.faces));
     [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
-    if debugVisu && visu
+    if debugVisu
         debugHandle(1) = patch(tempMesh, patchProps);
         pointProps.MarkerEdgeColor = 'r';
         pointProps.MarkerFaceColor = 'r';
@@ -78,11 +76,11 @@ end
 spIdx = knnsearch(tempMesh.vertices, [mean(meanMesh.vertices(:,1)), tempMesh.vertices(spIdx,2:3)]);
 SP = tempMesh.vertices(spIdx,:);
 
-if visu
+if debugVisu
     pointProps.MarkerEdgeColor = 'm';
     pointProps.MarkerFaceColor = 'm';
     pointProps.MarkerSize = 8;
-%     drawPoint3d(SP, pointProps)
+    % drawPoint3d(SP, pointProps)
     drawSphere(SP,2.5, 'FaceColor','m', 'EdgeColor','none', 'FaceLighting','gouraud')
     text(SP(:,1), SP(:,2), SP(:,3), 'SP','FontWeight','bold','Color','k',...
         'FontSize',16,'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
@@ -116,7 +114,8 @@ end
 distTransversePlane = [0 0 tempMesh.vertices(spIdx,3) 1 0 0 0 1 0];
 tempMesh = cutMeshByPlane(tempMesh, distTransversePlane,'part','above');
 
-if debugVisu && visu
+% Draw cutting planes
+if debugVisu
     patchProps.EdgeColor = 'k';
     debugHandle(1)=patch(tempMesh, patchProps);
     debugHandle(2)=drawPlane3d(distTransversePlane);
@@ -214,7 +213,7 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
     % Reduce the curvature threshold:
     curvatureThreshold = curvatureThreshold-0.01;
         
-    if debugVisu && visu
+    if debugVisu
         % Properties for the visualization of the curvature
         curvatureProps.FaceVertexCData = curvature;
         curvatureProps.FaceColor = 'flat';
@@ -242,38 +241,37 @@ if SacralPlaneNormal(3)<0
     SacralPlane=reversePlane(SacralPlane);
 end
 
-if visu
-    if debugVisu
-        % Properties for the visualization of the curvature
-        curvatureProps.FaceVertexCData = curvature;
-        curvatureProps.FaceColor = 'flat';
-        curvatureProps.EdgeColor = 'none';
-        curvatureProps.FaceAlpha = 0.6;
-        curvatureProps.EdgeLighting = 'gouraud';
-        curvatureProps.FaceLighting = 'gouraud';
-        % Flats
-        debugHandle(1)=patch('vertices', tempMesh.vertices, 'faces', ...
-            tempMesh.faces(flatsFacesIdx,:), curvatureProps);
-        % Proximal part of the sacrum without flats
-        patchProps.EdgeColor = 'none';
-        debugHandle(2)=patch('vertices', tempMesh.vertices, 'faces', ...
-            tempMesh.faces(~flatsFacesIdx,:), patchProps);
-        delete(debugHandle)
-    end
+
+if debugVisu
+    % Properties for the visualization of the curvature
+    curvatureProps.FaceVertexCData = curvature;
+    curvatureProps.FaceColor = 'flat';
+    curvatureProps.EdgeColor = 'none';
+    curvatureProps.FaceAlpha = 0.6;
+    curvatureProps.EdgeLighting = 'gouraud';
+    curvatureProps.FaceLighting = 'gouraud';
+    % Flats
+    debugHandle(1)=patch('vertices', tempMesh.vertices, 'faces', ...
+        tempMesh.faces(flatsFacesIdx,:), curvatureProps);
+    % Proximal part of the sacrum without flats
+    patchProps.EdgeColor = 'none';
+    debugHandle(2)=patch('vertices', tempMesh.vertices, 'faces', ...
+        tempMesh.faces(~flatsFacesIdx,:), patchProps);
+    delete(debugHandle)
     % Sacral plateau
     patchProps.FaceColor = 'none';
     patchProps.EdgeColor = 'k';
     patch(SacralMesh,patchProps);
     % Centroid of the sacral plateau
-    pointProps.MarkerEdgeColor = 'y';
-    pointProps.MarkerFaceColor = 'y';
+    pointProps.MarkerEdgeColor = 'k';
+    pointProps.MarkerFaceColor = 'k';
     drawPoint3d(SacralPlane(1:3), pointProps)
     text(SacralPlane(:,1), SacralPlane(:,2), SacralPlane(:,3), 'SC','FontWeight','bold',...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
     % Sacral plane
-    patchProps.FaceColor = 'y';
-    patchProps.FaceAlpha = 0.1;
-    drawPlane3d(SacralPlane,patchProps)
+    patchProps.FaceColor = 'k';
+    patchProps.FaceAlpha = 0.25;
+    drawPlatform(SacralPlane,75,patchProps)
 end
 
 end

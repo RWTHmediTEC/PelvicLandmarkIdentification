@@ -30,12 +30,12 @@ proxPelvis(2) = pelvis(3); % right hip bone
 
 % Calculate the SISP and rotate the mesh into the SISP until the rotation
 % vanishes and converges to: tempRot == eye(3).
-[tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu);
+[tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, debugVisu);
 % The product of all temporary rotations is the target rotation: targetRot
 targetRot = tempRot;
 while ~all(all(abs(eye(3)-tempRot)<eps*100))
     proxPelvis=arrayfun(@(x) transformPoint3d(x, tempRot), proxPelvis);
-    [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu);
+    [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, debugVisu);
     targetRot = tempRot*targetRot;
     if debugVisu
         patchProps.FaceColor = 'b';
@@ -56,18 +56,16 @@ PSIS = transformPoint3d(PSIS, inv(targetRot));
 
 
 %% Visualization
-if visu
+if debugVisu
+    % PSIS
     pointProps.MarkerEdgeColor = 'r';
     pointProps.MarkerFaceColor = 'r';
-%     drawPoint3d(PSIS, pointProps);
+    % drawPoint3d(PSIS, pointProps);
     drawSphere(PSIS(1,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
     drawSphere(PSIS(2,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
     PSIS_textHandle=text(PSIS(:,1), PSIS(:,2), PSIS(:,3), 'PSIS','FontWeight','bold',...
         'FontSize',16, 'VerticalAlignment','bottom','color','k');
     [PSIS_textHandle.HorizontalAlignment]=deal('right','left');
-end
-
-if debugVisu
     % Hip bones
     patchProps.FaceColor = [216, 212, 194]/255;
     debugHandles = arrayfun(@(x) patch(x, patchProps), pelvis([1,3]));
@@ -90,20 +88,20 @@ if debugVisu
         'PSISs'' midpoint','FontWeight','bold','FontSize',14, 'Rotation',-24,...
         'HorizontalAlignment', 'center', 'VerticalAlignment','bottom', 'Color','k');
     % Coordinate system
-    Q.C = [1 0 0; 0 1 0; 0 0 1];
+    sispCS.C = [1 0 0; 0 1 0; 0 0 1];
     ASISdist = distancePoints3d(ASIS(1,:),ASIS(2,:));
     QDScaling = 1/6 * ASISdist;
-    Q.P = repmat(midPoint3d(ASIS(1,:),ASIS(2,:)), 3, 1);
-    Q.D(1,:) = normalizeVector3d(ASIS(1,:)-ASIS(2,:));
-    Q.D(3,:) = normalizeVector3d(meshFaceNormals(SISPPatch));
-    Q.D(2,:) = normalizeVector3d(crossProduct3d(Q.D(3,:), Q.D(1,:)));
-    Q.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
-    csHandles = quiver3D(Q.P, Q.D, Q.C);
-    csTextPos = Q.P+1.07*Q.D+1;
+    sispCS.P = repmat(midPoint3d(ASIS(1,:),ASIS(2,:)), 3, 1);
+    sispCS.D(1,:) = normalizeVector3d(ASIS(2,:)-ASIS(1,:));
+    sispCS.D(3,:) = normalizeVector3d(meshFaceNormals(SISPPatch));
+    sispCS.D(2,:) = normalizeVector3d(crossProduct3d(sispCS.D(3,:), sispCS.D(1,:)));
+    sispCS.D = QDScaling*sispCS.D;
+    csHandles = quiver3D(sispCS.P, sispCS.D, sispCS.C);
+    csTextPos = sispCS.P+1.07*sispCS.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
     csTextHandle=text(csTextPos(:,1),csTextPos(:,2),csTextPos(:,3), {'X', 'Y', 'Z'}, textProps);
-    [csTextHandle.Color]=deal(Q.C(:,1),Q.C(:,2),Q.C(:,3));
+    [csTextHandle.Color]=deal(sispCS.C(:,1),sispCS.C(:,2),sispCS.C(:,3));
     
 %     % For publication
 %     [PSIS_textHandle.HorizontalAlignment]=deal('left','left');
@@ -122,7 +120,7 @@ end
 
 end
 
-function [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, visu, debugVisu)
+function [tempRot, PSIS] = superiorIliacSpinePlane(proxPelvis, ASIS, pointProps, debugVisu)
 % Osteophytes or bridging at the PIIS could be detected as PSIS landmark.
 % For this reason, the size of the z-component of the PSIS vector is
 % limited. This method does not work if both PIIS regions are affected!
@@ -163,7 +161,7 @@ while abs(PSISvector(3)) > MAX_Z_COMPONENT && zCut<superiorBoundary
     for s=Side
         proxPelvis(s) = cutMeshByPlane(proxPelvis(s), transversePlane,'part','above');
     end
-    if debugVisu && visu
+    if debugVisu
         patchProps.FaceColor='none';
         patchProps.EdgeColor='k';
         debugHandle = arrayfun(@(x) patch(x, patchProps), proxPelvis);
@@ -180,7 +178,7 @@ while abs(PSISvector(3)) > MAX_Z_COMPONENT && zCut<superiorBoundary
     PSISvector=normalizeVector3d(PSIS(2,:)-PSIS(1,:));
     % Move cutting plane to the lower PSIS (or rather PIIS in case of ...)
     zCut=min(PSIS(:,3));
-    if debugVisu && visu
+    if debugVisu
         debugHandle = drawPoint3d(PSIS, pointProps);
         delete(debugHandle)
     end

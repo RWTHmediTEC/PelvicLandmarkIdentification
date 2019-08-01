@@ -4,10 +4,8 @@ function PSIS = posteriorSuperiorIliacSpine1(pelvis, ASIS, varargin)
 % Parsing 
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
 % Define the sagittal plane
@@ -16,7 +14,7 @@ sagittalPlane = [0 0 0 0 1 0 0 0 1];
 [proxPelvis(2), ~, proxPelvis(1)] = cutMeshByPlane(pelvis, sagittalPlane);
 
 % Detect the symmetry plane
-symPlane = symmetryPlane(pelvis, 'visu',visu, 'debugVisu',debugVisu);
+symPlane = symmetryPlane(pelvis, 'debugVisu',debugVisu);
 symPlaneNormal = planeNormal(symPlane);
 if symPlaneNormal(1)<0
     symPlane(:, 7:9) = -symPlane(:, 7:9);
@@ -24,7 +22,7 @@ end
 proxPelvis(1) = cutMeshByPlane(proxPelvis(1), parallelPlane(symPlane, -10),'part','below');
 proxPelvis(2) = cutMeshByPlane(proxPelvis(2), parallelPlane(symPlane,  10),'part','above');
 
-if debugVisu && visu
+if debugVisu
     patchProps.EdgeColor = 'none';
     patchProps.FaceColor = [216, 212, 194]/255;
     patchProps.FaceAlpha = 1;
@@ -123,7 +121,7 @@ ppPelvis(1) = cutMeshByPlane(tempMesh, leftSagittalPlane,'part','below');
 rightSagittalPlane = [PSIS(2,1)-SAGITTAL_CUT_OFFSET 0 0 0 1 0 0 0 1];
 ppPelvis(3) = cutMeshByPlane(tempMesh, rightSagittalPlane,'part','above');
 
-if debugVisu && visu
+if debugVisu
     % Posterior superior iliac spine (PSIS)
     pointProps.Marker = 'o';
     pointProps.MarkerEdgeColor = 'r';
@@ -155,5 +153,5 @@ if debugVisu && visu
 end
 
 % Take the posterior-proximal part of the iliac bones as input
-PSIS = posteriorSuperiorIliacSpine3(ppPelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
+PSIS = posteriorSuperiorIliacSpine3(ppPelvis, ASIS, 'debugVisu',debugVisu);
 end

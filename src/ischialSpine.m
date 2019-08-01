@@ -4,10 +4,8 @@ function IS = ischialSpine(pelvis, ASIS, varargin)
 % Parsing
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
 % Point properties
@@ -44,7 +42,7 @@ else
     distPelvis(2) = tempMesh(2);
 end
 
-if debugVisu && visu
+if debugVisu
     patchProps.EdgeColor = 'none';
     patchProps.FaceColor = [216, 212, 194]/255;
     patchProps.FaceAlpha = 1;
@@ -83,13 +81,13 @@ for t=1:length(theta)
         % Get the most posterior point of the rotated mesh for each rotation
         [~, yMinIdx(s,t)] = min(tempPelvis(s).vertices(:,2));
     end
-    if debugVisu && visu
+    if debugVisu
         debugHandles=arrayfun(@(x) patch(x, patchProps), tempPelvis);
         delete(debugHandles)
     end
 end
 
-if debugVisu && visu
+if debugVisu
     % Visualize all most posterior points 
     debugHandles=drawPoint3d([...
         distPelvis(1).vertices(yMinIdx(1,:),:); ...
@@ -114,7 +112,7 @@ for s=1:2
     end
 end
 
-if debugVisu && visu
+if debugVisu
     % Visualize the candidates for IS
     pointProps.Linestyle = 'none';
     pointProps.Marker = 'o';
@@ -131,14 +129,14 @@ end
 IS(1,:) = candits{1}(distIdx(minDistIdx),:);
 IS(2,:) = candits{2}(minDistIdx,:);
 
-if visu   
+if debugVisu   
     % Draw IS points
-    pointProps.Linestyle = 'none';
-    pointProps.Marker = 'o';
-    pointProps.MarkerEdgeColor = 'g';
-    pointProps.MarkerFaceColor = 'g';
-    pointProps.MarkerSize = 8;
-%     drawPoint3d(IS, pointProps)
+    % pointProps.Linestyle = 'none';
+    % pointProps.Marker = 'o';
+    % pointProps.MarkerEdgeColor = 'g';
+    % pointProps.MarkerFaceColor = 'g';
+    % pointProps.MarkerSize = 8;
+    % drawPoint3d(IS, pointProps)
     drawSphere(IS(1,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
     drawSphere(IS(2,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
     textHandle=text(IS(:,1), IS(:,2), IS(:,3), 'IS','FontWeight','bold',...

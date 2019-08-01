@@ -4,10 +4,8 @@ function symPlane = symmetryPlane(pelvis,varargin)
 % Parsing
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
 % Define the sagittal plane
@@ -16,7 +14,7 @@ sagittalPlane = [0 0 0 0 1 0 0 0 1];
 [proxPelvis(1), ~, proxPelvis(2)] = cutMeshByPlane(pelvis, sagittalPlane);
 
 % For Debugging
-if debugVisu && visu
+if debugVisu
     patchProps.EdgeColor = 'none';
     patchProps.FaceColor = [216, 212, 194]/255;
     patchProps.FaceAlpha = 1;
@@ -69,7 +67,7 @@ symPoints = unique(symPoints, 'rows');
 
 symPlane = fitPlane(symPoints);
 
-if debugVisu && visu
+if debugVisu
     % For Debugging
     % Visualize all point pairs 
     edgeProps.Linestyle = '-';

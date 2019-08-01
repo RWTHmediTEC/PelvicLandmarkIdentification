@@ -4,10 +4,8 @@ function AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, varargin)
 % Parsing 
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
 % Frontal plane to keep only the anterior part of the mesh
@@ -23,7 +21,7 @@ sagittalPlane = [0 0 0 0 1 0 0 0 1];
 % Height of APP
 APPheight = intersectLinePlane(createLine3d(ASIS(1,:), ASIS(2,:)), sagittalPlane);
 
-if visu == true
+if debugVisu
     patchProps.EdgeColor = 'k';
     patchProps.FaceColor = [0.75 0.75 0.75];
     patchProps.FaceAlpha = 0.5;
@@ -76,7 +74,7 @@ for s=1:2
             [~, tempYmaxIdx] = max(tempMesh.vertices(:,2));
             
             if ~isempty(tempYmaxIdx)
-                if debugVisu && visu
+                if debugVisu
                     debugHandle(1) = patch(tempMesh, patchProps);
                     debugHandle(2) = drawPoint3d(tempMesh.vertices(tempYmaxIdx,:),pointProps);
                     delete(debugHandle)
@@ -97,7 +95,7 @@ for s=1:2
     end
 end
 
-if visu
+if debugVisu
     drawPoint3d(AIIS, pointProps)
     text(AIIS(:,1), AIIS(:,2), AIIS(:,3), 'AIIS','FontWeight','bold',...
         'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');

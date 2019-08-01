@@ -13,8 +13,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %       Use the function: automaticPelvicCS.m
 %
 % OPTIONAL INPUT:
-%   'visualization': Visualization of the APCS. Default is true.
-%   'debugVisu': Additional visualization for debuging. Default is false.
+%   'debugVisu': Visualization for debuging. Default is false.
 % 
 % OUTPUT: A struct with the following fields 
 %   PSIS = Posterior Superior Iliac Spine: 2x3 matrix with xyz-ccordinates
@@ -49,10 +48,8 @@ addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))
 % Parsing 
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
-addParameter(p,'visualization', false, logParValidFunc);
 addParameter(p,'debugVisu', false, logParValidFunc);
 parse(p,varargin{:});
-visu = logical(p.Results.visualization);
 debugVisu=logical(p.Results.debugVisu);
 
 % The pubic symphysis (PS) is the origin of the coordinate system if the
@@ -71,16 +68,16 @@ elseif NoP == 2 || NoP > 3
 end
 
 %% Visualization
-if visu
+if debugVisu
     % Surface of the pelvis
     meshProps.EdgeColor = 'none';
     meshProps.FaceColor = [216, 212, 194]/255;
-    meshProps.FaceAlpha = 1;
+    meshProps.FaceAlpha = 0.3;
     meshProps.EdgeLighting = 'gouraud';
     meshProps.FaceLighting = 'gouraud';
     visualizeMeshes(pelvis, meshProps);
     axis off tight
-    view(0,0)
+    view(180,0)
     
     % Point properties
     pointProps.Linestyle = 'none';
@@ -115,36 +112,36 @@ end
 % Posterior superior iliac spine (PSIS)
 switch NoP
     case 1
-        PSIS = posteriorSuperiorIliacSpine1(pelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
+        PSIS = posteriorSuperiorIliacSpine1(pelvis, ASIS, 'debugVisu',debugVisu);
     case 3
-        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
+        PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, 'debugVisu',debugVisu);
 end
 
 % Ischial spine (IS) detection
 switch NoP
     case 1
-        IS = ischialSpine(pelvis, ASIS, 'visu',visu, 'debugVisu',debugVisu);
+        IS = ischialSpine(pelvis, ASIS, 'debugVisu',debugVisu);
     case 3
-        IS = ischialSpine(concatenateMeshes(pelvis([1,3])), ASIS, 'visu',visu, 'debugVisu',debugVisu);
+        IS = ischialSpine(concatenateMeshes(pelvis([1,3])), ASIS, 'debugVisu',debugVisu);
 end
 
 % Anterior inferior iliac spine (AIIS) detection
 switch NoP
     case 1
-        AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, 'visu',visu, 'debugVisu',debugVisu);
+        AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, 'debugVisu',debugVisu);
     case 3
-        AIIS = anteriorInferiorIliacSpine(concatenateMeshes(pelvis([1,3])), ASIS, IS, 'visu',visu, 'debugVisu',debugVisu);
+        AIIS = anteriorInferiorIliacSpine(concatenateMeshes(pelvis([1,3])), ASIS, IS, 'debugVisu',debugVisu);
 end
 
 % Sacral plane (SP) detection
 switch NoP
     case 1
-        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(1), PSIS, 'visu',visu, 'debugVisu',debugVisu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(1), PSIS, 'debugVisu',debugVisu);
     case 3
-        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(2), PSIS, 'visu',visu, 'debugVisu',debugVisu);
+        [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(2), PSIS, 'debugVisu',debugVisu);
 end
 
-if visu
+if debugVisu
     medicalViewButtons
 end
 %% Output: The Landmarks
