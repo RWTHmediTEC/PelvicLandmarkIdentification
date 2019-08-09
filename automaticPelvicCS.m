@@ -20,23 +20,24 @@ function [TFM2APPCS, CL] = automaticPelvicCS(pelvis, varargin)
 %       called. Default is false.
 % 
 % OUTPUT:
-%   TFM2APCS: A 4x4 transformation matrix to transform the vertices 
-%   of the input mesh into the APCS: 
-%       pelvisAPCS = transformPoint3d(pelvis, TFM2APCS);
+%   TFM2APCS: A 4x4 transformation matrix to transform the vertices of the
+%    input mesh into the APP CS: 
+%       pelvisAPP_CS = transformPoint3d(pelvis, TFM2APCS);
 %   CL: A struct with clinical landmarks in the inital CS of the input
 %   mesh. For bilateral landmarks the first row (1,:) is the left side and 
 %   the second row (2,:) is the right side
-%       ASIS (Anterior Superior Iliac Spines): 2x3 matrix with xyz-ccordinates
-%       PS (Pubic Symphysis): 1x3 matrix with xyz-ccordinates
-%       PT (Pubic Tubercles): 2x3 matrix with xyz-ccordinates
-%       PSIS (Posterior Superior Iliac Spines): 2x3 matrix with xyz-ccordinates
-%       AIIS (Anterior Inferior Iliac Spine): 2x3 matrix with xyz-ccordinates (beta)
-%       IS (Ischial Spines): 2x3 matrix with xyz-ccordinates
-%       SP: Sacral Promontory: 1x3 vector with xyz-ccordinates
-%       SacralPlateau: The vertices and faces that form the sacral plateau.
-%       SacralPlane: 1x9 vector of a plane. SacralPlane(1:3) is the 
-%       centroid of the sacral plateau. SacralPlane(4:9) are two vectors 
-%       spanning the plane
+%    ASIS (Anterior Superior Iliac Spines): 2x3 matrix with xyz-coordinates
+%    PS (Pubic Symphysis): 1x3 matrix with xyz-coordinates
+%    PT (Pubic Tubercles): 2x3 matrix with xyz-coordinates
+%    PSIS (Posterior Superior Iliac Spines): 2x3 matrix with xyz-coordinates
+%    IS (Ischial Spines): 2x3 matrix with xyz-coordinates
+%    SP: Sacral Promontory: 1x3 vector with xyz-coordinates
+%   Beta version:
+%    AIIS (Anterior Inferior Iliac Spine): 2x3 matrix with xyz-coordinates
+%    SacralPlateau: The vertices and faces that form the sacral plateau.
+%    SacralPlane: 1x9 vector of a plane. SacralPlane(1:3) is the centroid 
+%     of the sacral plateau. SacralPlane(4:9) are two vectors spanning the 
+%     plane
 %
 % REFERENCES:
 %   The implementation is based roughly on [Kai 2014]:
@@ -46,8 +47,8 @@ function [TFM2APPCS, CL] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.13
-% DATE: 2019-07-30
+% VERSION: 1.1.14
+% DATE: 2019-08-09
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
 % LICENSE: 
 %
@@ -305,7 +306,7 @@ TFMtargetRot2APPCS = pelvicOrientation*pelvicPosition;
 TFMInertia2targetRot=[[targetRot, [0 0 0]']; [0 0 0 1]];
 % The transformation from the CS of the input mesh into the target rotation 
 TFMinput2targetRot=TFMInertia2targetRot*inertiaTFM;
-% The forward transformation from the CS of the input mesh into the APP CS
+% The transformation from the CS of the input mesh into the APP CS
 TFM2APPCS=TFMtargetRot2APPCS*TFMinput2targetRot;
 
 % Clinical landmarks (CL) from the target CS 2 the CS of the input mesh
