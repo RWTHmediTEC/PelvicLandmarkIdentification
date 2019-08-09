@@ -1,5 +1,8 @@
 function symPlane = symmetryPlane(pelvis,varargin)
-% Symmetry plane detection
+%SYMMETRYPLANE detects the symmetry plane of the pelvis
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing
 p = inputParser;

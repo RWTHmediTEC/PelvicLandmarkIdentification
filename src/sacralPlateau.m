@@ -1,4 +1,12 @@
 function [SP, SacralPlane, SacralMesh] = sacralPlateau(sacrum, PSIS, varargin)
+%SACRALPLATEAU detects the sacral promontory and the sacral plateau
+%
+% REFERENCES:
+%   2011 - Beniere et al. - Recovering Primitives in 3D CAD meshes 
+%       [Beniere 2011]
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing 
 p = inputParser;

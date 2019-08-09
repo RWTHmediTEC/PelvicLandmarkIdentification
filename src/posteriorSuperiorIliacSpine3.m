@@ -1,5 +1,8 @@
 function PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, varargin)
-% Posterior superior iliac spine (PSIS)
+%POSTERIORSUPERIORILIACSPINE3 detects the PSISs
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing 
 p = inputParser;

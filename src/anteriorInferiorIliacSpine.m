@@ -1,5 +1,8 @@
 function AIIS = anteriorInferiorIliacSpine(pelvis, ASIS, IS, varargin)
-% Anterior inferior iliac spine (AIIS) detection
+%ANTERIORINFERIORILIACSPINE detects the AIISs (beta)
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing 
 p = inputParser;

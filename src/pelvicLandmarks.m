@@ -7,7 +7,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %       pelvis.faces
 %       ATTENTION:
 %       - The mesh has to be transformed into the anterior pelvic plane 
-%         (APP) coordiante system.
+%         coordiante system APP CS.
 %       - The mesh should be clean otherwise the algorithm might not work.
 %   ASIS = Anterior Superior Iliac Spines: 2x3 matrix with xyz-coordinates
 %       Use the function: automaticPelvicCS.m
@@ -15,32 +15,26 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 % OPTIONAL INPUT:
 %   'debugVisu': Visualization for debuging. Default is false.
 % 
-% OUTPUT: A struct with the following fields 
-%   PSIS = Posterior Superior Iliac Spine: 2x3 matrix with xyz-ccordinates
-%   AIIS = Anterior Inferior Iliac Spine: 2x3 matrix with xyz-ccordinates
-%   IS = Ischial Spine: 2x3 matrix with xyz-ccordinates
-%   Note: For PSIS, AIIS and IS, the first row (1,:) is the left side and 
-%       the second row (2,:) is the right side
-%   SP: Sacral Promontory: 1x3 vector with xyz-ccordinates
-%   SacralPlateau: The vertices and faces that form the sacral plateau.
-%   SacralPlane: 1x9 matrix of a plane. SacralPlane(1:3) is the 
+% OUTPUT: 
+%   LM: A struct with landmarks in the APP CS: For bilateral landmarks the 
+%       first row (1,:) is the left side and  the second row (2,:) is the
+%       right side
+%    PSIS = Posterior Superior Iliac Spine: 2x3 matrix with xyz-coordinates
+%    IS = Ischial Spine: 2x3 matrix with xyz-coordinates
+%    SP: Sacral Promontory: 1x3 vector with xyz-coordinates
+%   Beta:
+%    AIIS = Anterior Inferior Iliac Spine: 2x3 matrix with xyz-coordinates
+%    SacralPlateau: The vertices and faces that form the sacral plateau.
+%    SacralPlane: 1x9 matrix of a plane. SacralPlane(1:3) is the 
 %       centroid of the sacral plateau. SacralPlane(4:9) are two vectors 
 %       spanning the plane
-%   
-% REFERENCES:
-%   2011 - Beniere et al. - Recovering Primitives in 3D CAD meshes 
-%       [Beniere 2011]
-%
-%   TODO / IDEAS:
-%   Clean up & standardize code
-%   Remove or update the landmark1.m functions
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
 % VERSION: 1.0.2
 % DATE: 2019-07-30
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
-% LICENSE: 
+% LICENSE: EUPL v1.2
 %
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']))

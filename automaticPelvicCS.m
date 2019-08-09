@@ -1,4 +1,4 @@
-function [TFM2APPCS, CL] = automaticPelvicCS(pelvis, varargin)
+function [TFM2APPCS, LM] = automaticPelvicCS(pelvis, varargin)
 %AUTOMATICPELVICCS Calculate the pelvic coordinate system (CS) based on the 
 %   anterior pelvic plane (APP)
 %
@@ -23,7 +23,7 @@ function [TFM2APPCS, CL] = automaticPelvicCS(pelvis, varargin)
 %   TFM2APCS: A 4x4 transformation matrix to transform the vertices of the
 %    input mesh into the APP CS: 
 %       pelvisAPP_CS = transformPoint3d(pelvis, TFM2APCS);
-%   CL: A struct with clinical landmarks in the inital CS of the input
+%   LM: A struct with clinical landmarks in the inital CS of the input
 %   mesh. For bilateral landmarks the first row (1,:) is the left side and 
 %   the second row (2,:) is the right side
 %    ASIS (Anterior Superior Iliac Spines): 2x3 matrix with xyz-coordinates
@@ -50,7 +50,7 @@ function [TFM2APPCS, CL] = automaticPelvicCS(pelvis, varargin)
 % VERSION: 1.1.14
 % DATE: 2019-08-09
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
-% LICENSE: 
+% LICENSE: EUPL v1.2
 %
 
 addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
@@ -310,10 +310,10 @@ TFMinput2targetRot=TFMInertia2targetRot*inertiaTFM;
 TFM2APPCS=TFMtargetRot2APPCS*TFMinput2targetRot;
 
 % Clinical landmarks (CL) from the target CS 2 the CS of the input mesh
-CL.ASIS = transformPoint3d(ASIS, inv(TFMinput2targetRot));
-CL.PS   = transformPoint3d(  PS, inv(TFMinput2targetRot));
-CL.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
-CL.MWPS = transformPoint3d(MWPS, inv(TFMinput2targetRot));
+LM.ASIS = transformPoint3d(ASIS, inv(TFMinput2targetRot));
+LM.PS   = transformPoint3d(  PS, inv(TFMinput2targetRot));
+LM.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
+LM.MWPS = transformPoint3d(MWPS, inv(TFMinput2targetRot));
 
 % Landmarks in the APP CS
 appCL.ASIS = transformPoint3d(ASIS, TFMtargetRot2APPCS);
@@ -462,9 +462,9 @@ end
 % Transform into the initial CS
 lmNames={'PSIS','IS','SP','AIIS','SacralPlateau'};
 for lm=1:length(lmNames)
-    CL.(lmNames{lm})=transformPoint3d(appCL.(lmNames{lm}), inv(TFM2APPCS));
+    LM.(lmNames{lm})=transformPoint3d(appCL.(lmNames{lm}), inv(TFM2APPCS));
 end
-CL.SacralPlane=transformPlane3d(appCL.SacralPlane, inv(TFM2APPCS));
+LM.SacralPlane=transformPlane3d(appCL.SacralPlane, inv(TFM2APPCS));
 
 if visu
     medicalViewButtons(axH)

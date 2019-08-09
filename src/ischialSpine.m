@@ -1,5 +1,8 @@
 function IS = ischialSpine(pelvis, ASIS, varargin)
-% Ischial spine (IS) detection
+%ISCHIALSPINE detects the ISs
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing
 p = inputParser;

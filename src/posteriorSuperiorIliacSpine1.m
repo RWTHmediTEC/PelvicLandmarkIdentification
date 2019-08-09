@@ -1,5 +1,8 @@
 function PSIS = posteriorSuperiorIliacSpine1(pelvis, ASIS, varargin)
-% Posterior superior iliac spine (PSIS) % iliac crest (IC) detection
+%POSTERIORSUPERIORILIACSPINE1 detects the PSISs and the iliac crest
+%
+% AUTHOR: Maximilian C. M. Fischer
+% 
 
 % Parsing 
 p = inputParser;
