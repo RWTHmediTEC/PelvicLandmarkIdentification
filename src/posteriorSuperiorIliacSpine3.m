@@ -81,6 +81,7 @@ if debugVisu
     edgeProps.Color = 'k';
     edgeProps.LineWidth = 2;
     debugHandles(end+1) = drawEdge3d(PSIS(1,:),PSIS(2,:), edgeProps);
+    pointProps.MarkerSize = 10;
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
     debugHandles(end+1) = drawPoint3d(PSISmidPoint, pointProps);
@@ -110,7 +111,7 @@ if debugVisu
 %     CamPos=[-0.2415    0.3897    0.8887]*norm(get(gca,'CameraPosition'));
 %     set(gca,'CameraPosition',CamPos);
 %     set(gca,'CameraUpVector',[0, 0, 1]);
-%     set(gca,'CameraViewAngle',4.5)
+%     set(gca,'CameraViewAngle',5.5)
 %     set(gcf,'GraphicsSmoothing','off')
 %     export_fig('Figure4', '-tif', '-r300')
     

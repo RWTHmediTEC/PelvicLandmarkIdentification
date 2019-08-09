@@ -75,9 +75,9 @@ if debugVisu
     meshProps.FaceAlpha = 0.3;
     meshProps.EdgeLighting = 'gouraud';
     meshProps.FaceLighting = 'gouraud';
-    visualizeMeshes(pelvis, meshProps);
-    axis off tight
-    view(180,0)
+    [~, debugAx, debugFig] = visualizeMeshes(pelvis, meshProps);
+    axis(debugAx, 'off', 'tight')
+    view(debugAx, [180,0])
     
     % Point properties
     pointProps.Linestyle = 'none';
@@ -87,23 +87,23 @@ if debugVisu
     % Anterior superior iliac spine (ASIS)
     pointProps.MarkerEdgeColor = 'y';
     pointProps.MarkerFaceColor = 'y';
-    % drawPoint3d(ASIS, pointProps)
-    drawSphere(ASIS(1,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
-    drawSphere(ASIS(2,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
+    % drawPoint3d(debugAx, ASIS, pointProps)
+    drawSphere(debugAx, ASIS(1,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(debugAx, ASIS(2,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
     % For publication (PSIS)
-    % textHandle=text(ASIS(:,1), ASIS(:,2), ASIS(:,3)+15, 'ASIS','FontWeight','bold',...
-    %     'FontSize',14,'VerticalAlignment', 'middle','color','k');
-    % [textHandle.HorizontalAlignment]=deal('left','left');
+%     textHandle=text(debugAx, ASIS(:,1), ASIS(:,2), ASIS(:,3)+15, 'ASIS','FontWeight','bold',...
+%         'FontSize',16,'VerticalAlignment', 'middle','color','k');
+%     [textHandle.HorizontalAlignment]=deal('left','left');
     % For publication (IS)
-    textHandle=text(ASIS(:,1), ASIS(:,2), ASIS(:,3), 'ASIS','FontWeight','bold',...
-        'FontSize',14,'VerticalAlignment', 'top','color','k');
+    textHandle=text(debugAx, ASIS(:,1), ASIS(:,2), ASIS(:,3), 'ASIS','FontWeight','bold',...
+        'FontSize',16,'VerticalAlignment', 'top','color','k');
     [textHandle.HorizontalAlignment]=deal('left','right');
     % Pubic symphysis (PS)
     pointProps.MarkerEdgeColor = 'b';
     pointProps.MarkerFaceColor = 'b';
-    % drawPoint3d(PS, pointProps)
-    drawSphere(PS,2.5, 'FaceColor','b', 'EdgeColor','none', 'FaceLighting','gouraud')
-    text(PS(:,1), PS(:,2), PS(:,3), 'PS','FontWeight','bold','FontSize',14, ...
+    % drawPoint3d(debugAx, PS, pointProps)
+    drawSphere(debugAx, PS,2.5, 'FaceColor','b', 'EdgeColor','none', 'FaceLighting','gouraud')
+    text(debugAx, PS(:,1), PS(:,2), PS(:,3), 'PS','FontWeight','bold','FontSize',14, ...
         'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
 end
 
@@ -142,7 +142,8 @@ switch NoP
 end
 
 if debugVisu
-    medicalViewButtons
+%     medicalViewButtons(debugAx)
+    close(debugFig)
 end
 %% Output: The Landmarks
 LM.PS = PS;
