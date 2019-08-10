@@ -1,6 +1,5 @@
-function [TFM2APPCS, LM] = automaticPelvicCS(pelvis, varargin)
-%AUTOMATICPELVICCS Calculate the pelvic coordinate system (CS) based on the 
-%   anterior pelvic plane (APP)
+function [TFM2pelvicCS, LM] = automaticPelvicCS(pelvis, varargin)
+%AUTOMATICPELVICCS Identify pelvic coordinate systems and landmarks 
 %
 % REQUIRED INPUT:
 %   pelvis: A mesh of the pelvis (hip bones and sacrum) as a single struct 
@@ -14,15 +13,17 @@ function [TFM2APPCS, LM] = automaticPelvicCS(pelvis, varargin)
 %     connected components, at least for the hip bones, otherwise the  
 %     algorithm might not work.
 % OPTIONAL INPUT:
+%   'CS': definition of the coordinate system of the output transformation:
+%       'APP' (default), 'SISP'
 %   'visualization': Visualization of the APCS. Default is true.
 %   'debugVisu': Additional visualization for debuging. Default is false.
 %   'resetPath': Resets the path to the inital state after the function was
 %       called. Default is false.
 % 
 % OUTPUT:
-%   TFM2APCS: A 4x4 transformation matrix to transform the vertices of the
-%    input mesh into the APP CS: 
-%       pelvisAPP_CS = transformPoint3d(pelvis, TFM2APCS);
+%   TFM2pelvicCS: A 4x4 transformation matrix to transform the vertices of 
+%    the input mesh into the pelvic CS: 
+%       pelvisCS = transformPoint3d(pelvis, TFM2pelvicCS);
 %   LM: A struct with clinical landmarks in the inital CS of the input
 %   mesh. For bilateral landmarks the first row (1,:) is the left side and 
 %   the second row (2,:) is the right side
@@ -40,15 +41,19 @@ function [TFM2APPCS, LM] = automaticPelvicCS(pelvis, varargin)
 %     plane
 %
 % REFERENCES:
-%   The implementation is based roughly on [Kai 2014]:
+%   The calculation of the APP is an enhanced version of [Kai 2014]:
 %   2014 - Kai et al. - Automatic construction of ananatomical coordinate
 %       system for three-dimensional bone models of the lower extremities:
 %       Pelvis, femur, and tibia
 %
+% TODO:
+%   Rename repository
+%   Include choice of the medical orientation of the CS
+%
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.14
-% DATE: 2019-08-09
+% VERSION: 1.1.15
+% DATE: 2019-08-10
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
@@ -59,12 +64,14 @@ addpath(genpath([fileparts([mfilename('fullpath'), '.m']) '\' 'src']));
 p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
+addParameter(p,'CS','APP',@(x) any(validatestring(x,{'APP','SISP'})));
 addParameter(p,'visualization',true,logParValidFunc);
 addParameter(p,'debugVisu',false,logParValidFunc);
 addParameter(p,'resetPath',false,logParValidFunc);
 parse(p,pelvis,varargin{:});
 
 pelvis = p.Results.pelvis;
+csDef=p.Results.CS;
 visu = p.Results.visualization;
 debugVisu=p.Results.debugVisu;
 resetPath=p.Results.resetPath;
@@ -316,10 +323,10 @@ LM.PT   = transformPoint3d(  PT, inv(TFMinput2targetRot));
 LM.MWPS = transformPoint3d(MWPS, inv(TFMinput2targetRot));
 
 % Landmarks in the APP CS
-appCL.ASIS = transformPoint3d(ASIS, TFMtargetRot2APPCS);
-appCL.PS   = transformPoint3d(PS  , TFMtargetRot2APPCS);
-appCL.PT   = transformPoint3d(PT  , TFMtargetRot2APPCS);
-appCL.MWPS = transformPoint3d(MWPS, TFMtargetRot2APPCS);
+appLM.ASIS = transformPoint3d(ASIS, TFMtargetRot2APPCS);
+appLM.PS   = transformPoint3d(PS  , TFMtargetRot2APPCS);
+appLM.PT   = transformPoint3d(PT  , TFMtargetRot2APPCS);
+appLM.MWPS = transformPoint3d(MWPS, TFMtargetRot2APPCS);
 % Pelvis in the APP coordinate system
 pelvisAPP = transformPoint3d(pelvis, TFM2APPCS);
 
@@ -347,7 +354,7 @@ if visu
     
     % Coordinate system
     appCS.C = [1 0 0; 0 1 0; 0 0 1];
-    ASISdist = distancePoints3d(appCL.ASIS(1,:),appCL.ASIS(2,:));
+    ASISdist = distancePoints3d(appLM.ASIS(1,:),appLM.ASIS(2,:));
     QDScaling = 1/6 * ASISdist;
     appCS.P = repmat([0, 0, 0], 3, 1);
     appCS.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
@@ -364,39 +371,39 @@ if visu
     appProps.EdgeColor = 'k';
     appProps.EdgeLighting = 'gouraud';
     appProps.FaceLighting = 'none';
-    appPatch.vertices=[appCL.PS; appCL.ASIS(1,:); appCL.ASIS(2,:)];
+    appPatch.vertices=[appLM.PS; appLM.ASIS(1,:); appLM.ASIS(2,:)];
     appPatch.faces = [1 2 3];
     patch(axH, appPatch, appProps)
     % ASISs
-    drawSphere(axH, appCL.ASIS(1,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
-    drawSphere(axH, appCL.ASIS(2,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.ASIS(1,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.ASIS(2,:),2.5, 'FaceColor','y', 'EdgeColor','none', 'FaceLighting','gouraud')
     % PS
-    drawSphere(axH, appCL.PS,2.5, 'FaceColor','b', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.PS,2.5, 'FaceColor','b', 'EdgeColor','none', 'FaceLighting','gouraud')
     
     % Construction of pubic symphysis
     edgeProps.Marker = 'none';
     edgeProps.Color = 'k';
     edgeProps.LineWidth = 2;
-    drawEdge3d(axH, appCL.MWPS(1,:), appCL.MWPS(2,:), edgeProps)
-    drawEdge3d(axH, appCL.PS, midPoint3d(appCL.MWPS(1,:), appCL.MWPS(2,:)), edgeProps)
-    drawEdge3d(axH, appCL.PT(1,:), appCL.PT(2,:), edgeProps)
+    drawEdge3d(axH, appLM.MWPS(1,:), appLM.MWPS(2,:), edgeProps)
+    drawEdge3d(axH, appLM.PS, midPoint3d(appLM.MWPS(1,:), appLM.MWPS(2,:)), edgeProps)
+    drawEdge3d(axH, appLM.PT(1,:), appLM.PT(2,:), edgeProps)
     
     % Pubic tubercle
     pointProps.MarkerSize = 10;
     pointProps.MarkerEdgeColor = 'k';
     pointProps.MarkerFaceColor = 'k';
-    drawPoint3d(axH, appCL.PT,pointProps)
+    drawPoint3d(axH, appLM.PT,pointProps)
     
     % Text
     textProps.Color='k';
-    text(axH, appCL.PS(1),appCL.PS(2)+5,appCL.PS(3)-5, {'PS'}, textProps);
-    text(axH, appCL.ASIS(1,1)+2,appCL.ASIS(1,2),appCL.ASIS(1,3)+1, {'ASIS'}, textProps,...
+    text(axH, appLM.PS(1),appLM.PS(2)+5,appLM.PS(3)-5, {'PS'}, textProps);
+    text(axH, appLM.ASIS(1,1)+2,appLM.ASIS(1,2),appLM.ASIS(1,3)+1, {'ASIS'}, textProps,...
         'HorizontalAlignment', 'Right', 'VerticalAlignment', 'bottom');
-    text(axH, appCL.ASIS(2,1)-2,appCL.ASIS(2,2),appCL.ASIS(2,3)+1, {'ASIS'}, textProps,...
+    text(axH, appLM.ASIS(2,1)-2,appLM.ASIS(2,2),appLM.ASIS(2,3)+1, {'ASIS'}, textProps,...
         'HorizontalAlignment', 'Left', 'VerticalAlignment', 'bottom');
-    text(axH, appCL.PT(1,1),appCL.PT(1,2),appCL.PT(1,3)-2, {'PT'}, textProps,...
+    text(axH, appLM.PT(1,1),appLM.PT(1,2),appLM.PT(1,3)-2, {'PT'}, textProps,...
         'HorizontalAlignment', 'Center', 'VerticalAlignment', 'top');
-    text(axH, appCL.PT(2,1),appCL.PT(2,2),appCL.PT(2,3)-2, {'PT'}, textProps,...
+    text(axH, appLM.PT(2,1),appLM.PT(2,2),appLM.PT(2,3)-2, {'PT'}, textProps,...
         'HorizontalAlignment', 'Center', 'VerticalAlignment', 'top');
     
 %     % For publication
@@ -409,45 +416,45 @@ if visu
 end
 
 %% Detect additional landmarks
-appCL = pelvicLandmarks(pelvisAPP, appCL.ASIS, 'debug', debugVisu);
+appLM = pelvicLandmarks(pelvisAPP, appLM.ASIS, 'debug', debugVisu);
 
 if visu
     % PSIS
-    drawSphere(axH, appCL.PSIS(1,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
-    drawSphere(axH, appCL.PSIS(2,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
-    PSIS_textHandle=text(axH, appCL.PSIS(:,1), appCL.PSIS(:,2), appCL.PSIS(:,3), 'PSIS', ...
+    drawSphere(axH, appLM.PSIS(1,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.PSIS(2,:),2.5, 'FaceColor','r', 'EdgeColor','none', 'FaceLighting','gouraud')
+    PSIS_textHandle=text(axH, appLM.PSIS(:,1), appLM.PSIS(:,2), appLM.PSIS(:,3), 'PSIS', ...
         'FontWeight','bold','FontSize',14, 'VerticalAlignment','bottom','Color','k');
     [PSIS_textHandle.HorizontalAlignment]=deal('right','left');
     % IS
-    drawSphere(axH, appCL.IS(1,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
-    drawSphere(axH, appCL.IS(2,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
-    textHandle=text(axH, appCL.IS(:,1), appCL.IS(:,2), appCL.IS(:,3), 'IS',...
+    drawSphere(axH, appLM.IS(1,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.IS(2,:),2.5, 'FaceColor','g', 'EdgeColor','none', 'FaceLighting','gouraud')
+    textHandle=text(axH, appLM.IS(:,1), appLM.IS(:,2), appLM.IS(:,3), 'IS',...
         'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
     [textHandle.HorizontalAlignment]=deal('left','right');
     % SP
-    drawSphere(axH, appCL.SP,2.5, 'FaceColor','m', 'EdgeColor','none', 'FaceLighting','gouraud')
-    text(axH, appCL.SP(:,1), appCL.SP(:,2), appCL.SP(:,3), 'SP',...
+    drawSphere(axH, appLM.SP,2.5, 'FaceColor','m', 'EdgeColor','none', 'FaceLighting','gouraud')
+    text(axH, appLM.SP(:,1), appLM.SP(:,2), appLM.SP(:,3), 'SP',...
         'HorizontalAlignment', 'center', 'VerticalAlignment', 'top',...
         'FontSize',14,'FontWeight','bold','Color','k');
     % Sacral plateau
-    patch(axH, appCL.SacralPlateau, 'FaceColor', 'none')
+    patch(axH, appLM.SacralPlateau, 'FaceColor', 'none')
     % Sacral plane
-    drawPlatform(axH, appCL.SacralPlane,75,'FaceAlpha',0.5,'FaceColor', 'none')
+    drawPlatform(axH, appLM.SacralPlane,75,'FaceAlpha',0.5,'FaceColor', 'none')
     % SISP CS
-    PSISmidPoint=midPoint3d(appCL.PSIS(1,:),appCL.PSIS(2,:));
-    sispPatch.vertices=[appCL.ASIS(1,:); PSISmidPoint; appCL.ASIS(2,:)];
+    PSISmidPoint=midPoint3d(appLM.PSIS(1,:),appLM.PSIS(2,:));
+    sispPatch.vertices=[appLM.ASIS(1,:); PSISmidPoint; appLM.ASIS(2,:)];
     sispPatch.faces = [1 2 3];
     appProps.FaceColor = [255,165,0]/255; % 'orange'
     patch(axH, sispPatch, appProps);
     % PSIS line
-    drawEdge3d(axH, appCL.PSIS(1,:),appCL.PSIS(2,:), edgeProps);
+    drawEdge3d(axH, appLM.PSIS(1,:),appLM.PSIS(2,:), edgeProps);
     drawPoint3d(axH, PSISmidPoint, pointProps);
     % Coordinate system
     sispCS.C = [1 0 0; 0 1 0; 0 0 1];
-    ASISdist = distancePoints3d(appCL.ASIS(1,:),appCL.ASIS(2,:));
+    ASISdist = distancePoints3d(appLM.ASIS(1,:),appLM.ASIS(2,:));
     QDScaling = 1/15 * ASISdist;
-    sispCS.P = repmat(midPoint3d(appCL.ASIS(1,:),appCL.ASIS(2,:)), 3, 1);
-    sispCS.D(1,:) = normalizeVector3d(appCL.ASIS(2,:)-appCL.ASIS(1,:));
+    sispCS.P = repmat(midPoint3d(appLM.ASIS(1,:),appLM.ASIS(2,:)), 3, 1);
+    sispCS.D(1,:) = normalizeVector3d(appLM.ASIS(2,:)-appLM.ASIS(1,:));
     sispCS.D(3,:) = normalizeVector3d(meshFaceNormals(sispPatch));
     sispCS.D(2,:) = normalizeVector3d(crossProduct3d(sispCS.D(3,:), sispCS.D(1,:)));
     sispCS.D = QDScaling*sispCS.D;
@@ -459,12 +466,27 @@ if visu
     [csTextHandle.Color]=deal(sispCS.C(:,1),sispCS.C(:,2),sispCS.C(:,3));
 end
     
-% Transform into the initial CS
+% Transform landmarks from the APP CS into the initial CS
 lmNames={'PSIS','IS','SP','AIIS','SacralPlateau'};
 for lm=1:length(lmNames)
-    LM.(lmNames{lm})=transformPoint3d(appCL.(lmNames{lm}), inv(TFM2APPCS));
+    LM.(lmNames{lm})=transformPoint3d(appLM.(lmNames{lm}), inv(TFM2APPCS));
 end
-LM.SacralPlane=transformPlane3d(appCL.SacralPlane, inv(TFM2APPCS));
+LM.SacralPlane=transformPlane3d(appLM.SacralPlane, inv(TFM2APPCS));
+
+% Select output TFM
+switch csDef
+    case 'APP'
+        TFM2pelvicCS=TFM2APPCS;
+    case 'SISP'
+        sispPatch.vertices=[LM.ASIS(1,:); midPoint3d(LM.PSIS(1,:),LM.PSIS(2,:)); LM.ASIS(2,:)];
+        sispPatch.faces = [1 2 3];
+        sispTrans = [[eye(3), -midPoint3d(LM.ASIS(1,:),LM.ASIS(2,:))']; [0 0 0 1]];
+        sispRot=eye(4);
+        sispRot(3,1:3) = normalizeVector3d(LM.ASIS(2,:)-LM.ASIS(1,:));
+        sispRot(2,1:3) = normalizeVector3d(meshFaceNormals(sispPatch));
+        sispRot(1,1:3) = normalizeVector3d(crossProduct3d(sispRot(2,1:3), sispRot(3,1:3)));
+        TFM2pelvicCS=sispRot*sispTrans;
+end
 
 if visu
     medicalViewButtons(axH)
