@@ -2,7 +2,9 @@ function newMesh = vertex4BoundEdgeRemover(mesh)
 % VERTEX4BOUNDEDGEREMOVER removes vertices with 4 or more boundary edges from a mesh
 %
 % AUTHOR: Maximilian C. M. Fischer
-% 
+% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% LICENSE: EUPL v1.2
+%
 
 vertex4edge=Inf;
 
