@@ -1,5 +1,5 @@
 function [TFM2pelvicCS, LM] = automaticPelvicCS(pelvis, varargin)
-%AUTOMATICPELVICCS Identify pelvic coordinate systems and landmarks 
+%AUTOMATICPELVICCS Identify pelvic landmarks and coordinate systems
 %
 % REQUIRED INPUT:
 %   pelvis: A mesh of the pelvis (hip bones and sacrum) as a single struct 
@@ -52,8 +52,8 @@ function [TFM2pelvicCS, LM] = automaticPelvicCS(pelvis, varargin)
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.15
-% DATE: 2019-08-10
+% VERSION: 1.1.16
+% DATE: 2019-08-30
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
@@ -413,6 +413,12 @@ if visu
 %     set(gca,'CameraViewAngle',5.5)
 %     set(gcf,'GraphicsSmoothing','off')
 %     export_fig('Figure3', '-tif', '-r300')
+end
+
+% Skip additional landmarks if not required
+if nargout == 1 && strcmp(csDef, 'APP')
+        TFM2pelvicCS=TFM2APPCS;
+        return
 end
 
 %% Detect additional landmarks
