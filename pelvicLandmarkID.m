@@ -1,5 +1,5 @@
 function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
-%AUTOMATICPELVICCS Identify pelvic landmarks and coordinate systems
+%PELVICLANDMARKID Identify pelvic landmarks and coordinate systems
 %
 % REQUIRED INPUT:
 %   pelvis: A mesh of the pelvis (hip bones and sacrum) as a single struct 
@@ -52,7 +52,7 @@ function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
 % VERSION: 2.0.0
-% DATE: 2019-08-30
+% DATE: 2019-09-02
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %

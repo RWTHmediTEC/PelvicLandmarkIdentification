@@ -19,7 +19,7 @@ addpath(genpath('src'))
 % Load subject names
 load('VSD\MATLAB\res\VSD_Subjects.mat', 'Subjects')
 
-for s=20%:size(Subjects, 1)
+for s=1%:size(Subjects, 1)
     load(['VSD\Bones\' Subjects.Number{s} '.mat'],'B');
     % Construct the pelvic bone
     [pelvis.vertices, pelvis.faces] = concatenateMeshes(B(1:3).mesh);
