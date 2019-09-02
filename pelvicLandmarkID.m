@@ -1,4 +1,4 @@
-function [TFM2pelvicCS, LM] = automaticPelvicCS(pelvis, varargin)
+function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
 %AUTOMATICPELVICCS Identify pelvic landmarks and coordinate systems
 %
 % REQUIRED INPUT:
@@ -47,12 +47,11 @@ function [TFM2pelvicCS, LM] = automaticPelvicCS(pelvis, varargin)
 %       Pelvis, femur, and tibia
 %
 % TODO:
-%   Rename repository
 %   Include choice of the medical orientation of the CS
 %
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 1.1.16
+% VERSION: 2.0.0
 % DATE: 2019-08-30
 % COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
