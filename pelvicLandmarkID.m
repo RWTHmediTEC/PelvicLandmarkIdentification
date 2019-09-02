@@ -41,6 +41,8 @@ function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
 %     plane
 %
 % REFERENCES:
+%   2019 - Fischer et al. - A robust method for automatic identification of
+%       landmarks on surface models of the pelvis
 %   The calculation of the APP is an enhanced version of [Kai 2014]:
 %   2014 - Kai et al. - Automatic construction of ananatomical coordinate
 %       system for three-dimensional bone models of the lower extremities:
