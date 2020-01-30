@@ -4,7 +4,7 @@ echo Library installer script
 echo ------------------------
 echo[
 
-set LIBRARY_NAME=AutomaticPelvicCoordinateSystem
+set LIBRARY_NAME=PelvicLandmarkIdentification
 set VERSION=2.0.0
 
 if "%MATLAB_LIBS%" == "" (
@@ -31,7 +31,7 @@ if "%MATLAB_LIBS%" == "" (
     echo %~dp0.git >> exclude.txt
     echo %~dp0tests\cache >> exclude.txt
     echo exclude.txt >> exclude.txt
-    xcopy . "%MATLAB_LIBS%\%LIBRARY_NAME%-%VERSION%\" /f /y /e /EXCLUDE:exclude.txt
+    xcopy "%~dp0." "%MATLAB_LIBS%\%LIBRARY_NAME%-%VERSION%\" /i /f /y /e /EXCLUDE:exclude.txt
     del exclude.txt
 
     pause
