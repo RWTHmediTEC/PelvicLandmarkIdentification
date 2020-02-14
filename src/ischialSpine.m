@@ -2,7 +2,7 @@ function IS = ischialSpine(pelvis, ASIS, varargin)
 %ISCHIALSPINE detects the ISs
 %
 % AUTHOR: Maximilian C. M. Fischer
-% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% COPYRIGHT (C) 2016 - 2020 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
 

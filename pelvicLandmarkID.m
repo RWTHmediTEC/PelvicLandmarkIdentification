@@ -15,7 +15,12 @@ function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
 % OPTIONAL INPUT:
 %   'CS': definition of the coordinate system of the output transformation:
 %       'APP' (default), 'SISP'
-%   'visualization': Visualization of the APCS. Default is true.
+%   'anatomicalOrientation': Option to define the anatomical orientation of
+%       the CS. Default is 'RAS' (X axis: [R]ight, Y axis: [A]nterior, 
+%       Z axis: [S]uperior).
+%   'visualization': Visualization of the APCS. Default is true. The 
+%       visualization is always in 'RAS' orientation irrespective of the 
+%       'anatomicalOrientation' option.
 %   'debugVisu': Additional visualization for debuging. Default is false.
 %   'resetPath': Resets the path to the inital state after the function was
 %       called. Default is false.
@@ -48,14 +53,11 @@ function [TFM2pelvicCS, LM] = pelvicLandmarkID(pelvis, varargin)
 %       system for three-dimensional bone models of the lower extremities:
 %       Pelvis, femur, and tibia
 %
-% TODO:
-%   Include choice of the medical orientation of the CS
-%
 % AUTHOR: Maximilian C. M. Fischer
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
-% VERSION: 2.0.0
-% DATE: 2019-09-02
-% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% VERSION: 2.0.1
+% DATE: 2020-02-14
+% COPYRIGHT (C) 2016 - 2020 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
 
@@ -66,6 +68,7 @@ p = inputParser;
 logParValidFunc=@(x) (islogical(x) || isequal(x,1) || isequal(x,0));
 addRequired(p,'pelvis',@(x) isstruct(x) && isfield(x, 'vertices') && isfield(x,'faces'))
 addParameter(p,'CS','APP',@(x) any(validatestring(x,{'APP','SISP'})));
+addParameter(p,'anatomicalOrientation','RAS')
 addParameter(p,'visualization',true,logParValidFunc);
 addParameter(p,'debugVisu',false,logParValidFunc);
 addParameter(p,'resetPath',false,logParValidFunc);
@@ -73,6 +76,7 @@ parse(p,pelvis,varargin{:});
 
 pelvis = p.Results.pelvis;
 csDef=p.Results.CS;
+aoDef=p.Results.anatomicalOrientation;
 visu = p.Results.visualization;
 debugVisu=p.Results.debugVisu;
 resetPath=p.Results.resetPath;
@@ -122,7 +126,7 @@ if debugVisu
     QDScaling = 40;
     initialCS.P = repmat([0, 0, 0], 3, 1);
     initialCS.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
-    [~] = quiver3D(debugAx, initialCS.P, initialCS.D, initialCS.C);
+    [~] = drawArrow3d(debugAx, initialCS.P, initialCS.D, initialCS.C);
     textPos = initialCS.P+1.07*initialCS.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
@@ -359,7 +363,7 @@ if visu
     QDScaling = 1/6 * ASISdist;
     appCS.P = repmat([0, 0, 0], 3, 1);
     appCS.D = QDScaling*[1 0 0; 0 1 0; 0 0 1];
-    [~] = quiver3D(axH, appCS.P, appCS.D, appCS.C);
+    [~] = drawArrow3d(axH, appCS.P, appCS.D, appCS.C);
     textPos = appCS.P+1.07*appCS.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
@@ -418,7 +422,7 @@ end
 
 % Skip additional landmarks if not required
 if nargout == 1 && strcmp(csDef, 'APP')
-        TFM2pelvicCS=TFM2APPCS;
+        TFM2pelvicCS=anatomicalCoordinateSystemTFM('RAS', aoDef)*TFM2APPCS;
         return
 end
 
@@ -465,7 +469,7 @@ if visu
     sispCS.D(3,:) = normalizeVector3d(meshFaceNormals(sispPatch));
     sispCS.D(2,:) = normalizeVector3d(crossProduct3d(sispCS.D(3,:), sispCS.D(1,:)));
     sispCS.D = QDScaling*sispCS.D;
-    quiver3D(axH, sispCS.P, sispCS.D, sispCS.C);
+    drawArrow3d(axH, sispCS.P, sispCS.D, sispCS.C);
     csTextPos = sispCS.P+1.07*sispCS.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
@@ -483,7 +487,7 @@ LM.SacralPlane=transformPlane3d(appLM.SacralPlane, inv(TFM2APPCS));
 % Select output TFM
 switch csDef
     case 'APP'
-        TFM2pelvicCS=TFM2APPCS;
+        TFM2pelvicCS=anatomicalCoordinateSystemTFM('RAS', aoDef)*TFM2APPCS;
     case 'SISP'
         sispPatch.vertices=[LM.ASIS(1,:); midPoint3d(LM.PSIS(1,:),LM.PSIS(2,:)); LM.ASIS(2,:)];
         sispPatch.faces = [1 2 3];
@@ -492,11 +496,11 @@ switch csDef
         sispRot(3,1:3) = normalizeVector3d(LM.ASIS(2,:)-LM.ASIS(1,:));
         sispRot(2,1:3) = normalizeVector3d(meshFaceNormals(sispPatch));
         sispRot(1,1:3) = normalizeVector3d(crossProduct3d(sispRot(2,1:3), sispRot(3,1:3)));
-        TFM2pelvicCS=sispRot*sispTrans;
+        TFM2pelvicCS=anatomicalCoordinateSystemTFM('ASR', aoDef)*sispRot*sispTrans;
 end
 
 if visu
-    medicalViewButtons(axH)
+    anatomicalViewButtons(axH)
 end
 
 if resetPath

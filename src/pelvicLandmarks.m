@@ -33,7 +33,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 % 	mediTEC - Chair of Medical Engineering, RWTH Aachen University
 % VERSION: 1.0.2
 % DATE: 2019-07-30
-% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% COPYRIGHT (C) 2016 - 2020 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
 
@@ -136,7 +136,7 @@ switch NoP
 end
 
 if debugVisu
-%     medicalViewButtons(debugAx)
+%     anatomicalViewButtons(debugAx)
     close(debugFig)
 end
 %% Output: The Landmarks

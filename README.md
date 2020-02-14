@@ -8,6 +8,7 @@ Please cite the following paper:<br/>
 ## Usage 
 Clone with recursive option to get submodules.<br/>
 Run pelvicLandmarkID_example.m in MATLAB.
+![pelvicLM_ID](https://user-images.githubusercontent.com/15254908/74542388-c7b2ac00-4f43-11ea-9bb6-06390c5bb1d1.PNG)
 
 ## Releases
 v2.0.0 (https://doi.org/10.5281/zenodo.3384110) was used in [Fischer 2019]. 

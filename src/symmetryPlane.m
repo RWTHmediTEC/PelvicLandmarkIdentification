@@ -2,7 +2,7 @@ function symPlane = symmetryPlane(pelvis,varargin)
 %SYMMETRYPLANE detects the symmetry plane of the pelvis
 %
 % AUTHOR: Maximilian C. M. Fischer
-% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% COPYRIGHT (C) 2016 - 2020 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
 

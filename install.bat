@@ -5,7 +5,7 @@ echo ------------------------
 echo[
 
 set LIBRARY_NAME=PelvicLandmarkIdentification
-set VERSION=2.0.0
+set VERSION=2.0.1
 
 if "%MATLAB_LIBS%" == "" (
     echo Error: The environment variable 'MATLAB_LIBS' is not set.

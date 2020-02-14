@@ -2,7 +2,7 @@ function PSIS = posteriorSuperiorIliacSpine3(pelvis, ASIS, varargin)
 %POSTERIORSUPERIORILIACSPINE3 detects the PSISs
 %
 % AUTHOR: Maximilian C. M. Fischer
-% COPYRIGHT (C) 2016 - 2019 Maximilian C. M. Fischer
+% COPYRIGHT (C) 2016 - 2020 Maximilian C. M. Fischer
 % LICENSE: EUPL v1.2
 %
 
@@ -102,7 +102,7 @@ if debugVisu
     sispCS.D(3,:) = normalizeVector3d(meshFaceNormals(SISPPatch));
     sispCS.D(2,:) = normalizeVector3d(crossProduct3d(sispCS.D(3,:), sispCS.D(1,:)));
     sispCS.D = QDScaling*sispCS.D;
-    csHandles = quiver3D(sispCS.P, sispCS.D, sispCS.C);
+    csHandles = drawArrow3d(sispCS.P, sispCS.D, sispCS.C);
     csTextPos = sispCS.P+1.07*sispCS.D+1;
     textProps.FontSize=14;
     textProps.FontWeight='bold';
