@@ -422,7 +422,7 @@ end
 
 % Skip additional landmarks if not required
 if nargout == 1 && strcmp(csDef, 'APP')
-        TFM2pelvicCS=anatomicalCoordinateSystemTFM('RAS', aoDef)*TFM2APPCS;
+        TFM2pelvicCS=anatomicalOrientationTFM('RAS', aoDef)*TFM2APPCS;
         return
 end
 
@@ -487,7 +487,7 @@ LM.SacralPlane=transformPlane3d(appLM.SacralPlane, inv(TFM2APPCS));
 % Select output TFM
 switch csDef
     case 'APP'
-        TFM2pelvicCS=anatomicalCoordinateSystemTFM('RAS', aoDef)*TFM2APPCS;
+        TFM2pelvicCS=anatomicalOrientationTFM('RAS', aoDef)*TFM2APPCS;
     case 'SISP'
         sispPatch.vertices=[LM.ASIS(1,:); midPoint3d(LM.PSIS(1,:),LM.PSIS(2,:)); LM.ASIS(2,:)];
         sispPatch.faces = [1 2 3];
@@ -496,7 +496,7 @@ switch csDef
         sispRot(3,1:3) = normalizeVector3d(LM.ASIS(2,:)-LM.ASIS(1,:));
         sispRot(2,1:3) = normalizeVector3d(meshFaceNormals(sispPatch));
         sispRot(1,1:3) = normalizeVector3d(crossProduct3d(sispRot(2,1:3), sispRot(3,1:3)));
-        TFM2pelvicCS=anatomicalCoordinateSystemTFM('ASR', aoDef)*sispRot*sispTrans;
+        TFM2pelvicCS=anatomicalOrientationTFM('ASR', aoDef)*sispRot*sispTrans;
 end
 
 if visu
