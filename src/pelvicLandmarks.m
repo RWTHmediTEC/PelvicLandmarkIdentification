@@ -10,7 +10,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 %         coordiante system APP CS.
 %       - The mesh should be clean otherwise the algorithm might not work.
 %   ASIS = Anterior Superior Iliac Spines: 2x3 matrix with xyz-coordinates
-%       Use the function: automaticPelvicCS.m
+%       Use the function: pelvicLandmarkID.m
 %
 % OPTIONAL INPUT:
 %   'debugVisu': Visualization for debuging. Default is false.
