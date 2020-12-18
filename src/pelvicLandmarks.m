@@ -17,7 +17,7 @@ function LM = pelvicLandmarks(pelvis, ASIS, varargin)
 % 
 % OUTPUT: 
 %   LM: A struct with landmarks in the APP CS: For bilateral landmarks the 
-%       first row (1,:) is the left side and  the second row (2,:) is the
+%       first row (1,:) is the left side and the second row (2,:) is the
 %       right side
 %    PSIS = Posterior Superior Iliac Spine: 2x3 matrix with xyz-coordinates
 %    IS = Ischial Spine: 2x3 matrix with xyz-coordinates
@@ -135,6 +135,42 @@ switch NoP
         [SP, SacralPlane, SacralMesh] = sacralPlateau(pelvis(2), PSIS, 'debugVisu',debugVisu);
 end
 
+% Iliac tubercle [beta]
+switch NoP
+    case 1
+        [~, IT_L] = min(pelvis.vertices(:,1));
+        IT(1,:) = pelvis.vertices(IT_L,:);
+        [~, IT_R] = max(pelvis.vertices(:,1));
+        IT(2,:) = pelvis.vertices(IT_R,:);
+    case 3
+        [~, IT_L] = min(pelvis(1).vertices(:,1));
+        IT(1,:) = pelvis(1).vertices(IT_L,:);
+        [~, IT_R] = max(pelvis(3).vertices(:,1));
+        IT(2,:) = pelvis(3).vertices(IT_R,:);
+end
+
+% Superior iliac crest [beta]
+switch NoP
+    case 1
+        % !!! Does not work for fusion of lumbar vertebrae - Cut pelvis at 
+        % the PSISs as workaround !!!
+        pelvis_L = pelvis.vertices(pelvis.vertices(:,1)<0,:);
+        pelvis_R = pelvis.vertices(pelvis.vertices(:,1)>0,:);
+    case 3
+        pelvis_L = pelvis(1).vertices;
+        pelvis_R = pelvis(3).vertices;
+end
+[~, SIC_L] = max(pelvis_L(:,3));
+SIC(1,:) = pelvis_L(SIC_L,:);
+[~, SIC_R] = max(pelvis_R(:,3));
+SIC(2,:) = pelvis_R(SIC_R,:);
+
+% Inferior ischial tuberosity [beta]
+[~, IIT_L] = min(pelvis_L(:,3));
+IIT(1,:) = pelvis_L(IIT_L,:);
+[~, IIT_R] = min(pelvis_R(:,3));
+IIT(2,:) = pelvis_R(IIT_R,:);
+
 if debugVisu
 %     anatomicalViewButtons(debugAx)
     close(debugFig)
@@ -148,5 +184,8 @@ LM.IS = IS;
 LM.SacralPlane = SacralPlane;
 LM.SP = SP;
 LM.SacralPlateau = SacralMesh;
+LM.IT = IT;
+LM.SIC = SIC;
+LM.IIT = IIT;
 
 end

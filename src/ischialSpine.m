@@ -70,7 +70,7 @@ if debugVisu
     delete(debugHandles)
 end
 
-% Rotate from -5° to 45° in steps of 1°
+% Rotate from -5Â° to 45Â° in steps of 1Â°
 startAngle=-5;
 stopAngle=45;
 theta = linspace(deg2rad(startAngle), deg2rad(stopAngle), stopAngle-startAngle);
@@ -106,9 +106,17 @@ candits=cell(2,1);
 for s=1:2
     % Get unique most posterior points
     cands{s} = unique(distPelvis(s).vertices(yMinIdx(s,:),:),'rows');
-    % Remove vertices on the outline
+    % Get outline vertices of the mesh
     outlineVertices = distPelvis(s).vertices(unique(outline(distPelvis(s).faces)),:);
-    cands{s}(ismember(cands{s}, outlineVertices ,'rows'),:)=[];
+    if ~all(ismember(cands{s}, outlineVertices ,'rows'))
+        % Remove vertices on the outline if not all vertices are part of the outline
+        cands{s}(ismember(cands{s}, outlineVertices ,'rows'),:)=[];
+    else
+        % Else take the most inferior vertex
+        [~, mostInferiorIdx] = min(cands{s}(:,3));
+        cands{s} = cands{s}(mostInferiorIdx,:);
+        warning('Review ischial spines!')
+    end
     % Add vertices within a given radius to most posterior points 
     for c=1:size(cands{s},1)
         candits{s} = [candits{s}; ...
