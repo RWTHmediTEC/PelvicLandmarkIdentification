@@ -244,13 +244,18 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
     end
 end
 
-SacralMesh = flatsMesh;
-% Check orientation of the sacral plane
-SacralPlaneNormal=planeNormal(SacralPlane);
-if SacralPlaneNormal(3)<0
-    SacralPlane=reversePlane(SacralPlane);
+if isempty(flatsMesh)
+    warning('Sacral plateau could not be identified!')
+    SacralMesh = [];
+    SacralPlane = [];
+else
+    SacralMesh = flatsMesh;
+    % Check orientation of the sacral plane
+    SacralPlaneNormal = planeNormal(SacralPlane);
+    if SacralPlaneNormal(3)<0
+        SacralPlane = reversePlane(SacralPlane);
+    end
 end
-
 
 if debugVisu
     % Properties for the visualization of the curvature

@@ -468,10 +468,12 @@ if visu
     text(axH, appLM.SP(:,1), appLM.SP(:,2), appLM.SP(:,3), 'SP',...
         'HorizontalAlignment', 'center', 'VerticalAlignment', 'top',...
         'FontSize',14,'FontWeight','bold','Color','k');
-    % Sacral plateau
-    patch(axH, appLM.SacralPlateau, 'FaceColor', 'none')
-    % Sacral plane
-    drawPlatform(axH, appLM.SacralPlane,75,'FaceAlpha',0.5,'FaceColor', 'none')
+    if ~isempty(appLM.SacralPlateau)
+        % Sacral plateau
+        patch(axH, appLM.SacralPlateau, 'FaceColor', 'none')
+        % Sacral plane
+        drawPlatform(axH, appLM.SacralPlane,75,'FaceAlpha',0.5,'FaceColor', 'none')
+    end
     % SISP CS
     PSISmidPoint=midPoint3d(appLM.PSIS(1,:),appLM.PSIS(2,:));
     sispPatch.vertices=[appLM.ASIS(1,:); PSISmidPoint; appLM.ASIS(2,:)];
@@ -501,9 +503,13 @@ end
 % Transform landmarks from the APP CS into the initial CS
 lmNames={'PSIS','IS','SP','AIIS','SacralPlateau','IT','SIC','IIT'};
 for lm=1:length(lmNames)
-    LM.(lmNames{lm})=transformPoint3d(appLM.(lmNames{lm}), inv(TFM2APPCS));
+    if ~isempty(appLM.(lmNames{lm}))
+        LM.(lmNames{lm})=transformPoint3d(appLM.(lmNames{lm}), inv(TFM2APPCS));
+    end
 end
-LM.SacralPlane=transformPlane3d(appLM.SacralPlane, inv(TFM2APPCS));
+if ~isempty(appLM.SacralPlane)
+    LM.SacralPlane=transformPlane3d(appLM.SacralPlane, inv(TFM2APPCS));
+end
 
 % Select output TFM
 switch csDef
