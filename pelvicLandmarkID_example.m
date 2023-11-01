@@ -1,4 +1,4 @@
-clearvars; close all; opengl hardware
+clearvars; close all
 
 % Clone example data
 if ~exist('VSD', 'dir')
@@ -18,14 +18,14 @@ addpath(genpath('src'))
 
 % Load subjects & meta data
 subjectXLSX = 'VSD\MATLAB\res\VSD_Subjects.xlsx';
-[~, ~, metaData] = xlsread(subjectXLSX);
-Subjects = cell2table(metaData(2:end,:),'VariableNames',metaData(1,:));
+Subjects = readtable(subjectXLSX);
 
 visu = 1;
 for s=1:size(Subjects, 1)
     name = Subjects.ID{s};
     
     load(['VSD\Bones\' name '.mat'],'B');
+    disp(['Processing subject ' name])
     % Construct the pelvic bone
     [pelvis.vertices, pelvis.faces] = concatenateMeshes(...
         splitMesh(B(ismember({B.name},'Hip_R')).mesh,'maxBoundingBox'),...
