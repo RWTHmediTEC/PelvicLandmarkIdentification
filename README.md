@@ -11,7 +11,7 @@ Fischer, M. C. M., Krooß, F., Habor, J. & Radermacher, K. A robust method for a
 
 ## Usage 
 Clone with the recursive option to get the submodules and run *pelvicLandmarkID_example.m* in MATLAB.
-![pelvicLM_ID](https://user-images.githubusercontent.com/15254908/74542388-c7b2ac00-4f43-11ea-9bb6-06390c5bb1d1.PNG)
+![pelvicLM_z023](https://github.com/RWTHmediTEC/PelvicLandmarkIdentification/assets/43516130/a417240b-9600-432a-9e2c-e7a16184b975)
 
 ## License
-EUPL v1.2
+[![License: EUPL v1.2](https://img.shields.io/badge/License-EUPL_v1.2-orange.svg)](https://eupl.eu/1.2/en/)

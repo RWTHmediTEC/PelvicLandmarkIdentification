@@ -445,24 +445,24 @@ if visu
     textHandle=text(axH, appLM.IS(:,1), appLM.IS(:,2), appLM.IS(:,3), 'IS',...
         'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
     [textHandle.HorizontalAlignment]=deal('left','right');
-    % % IT
-    % drawSphere(axH, appLM.IT(1,:),2.5, 'FaceColor','c', 'EdgeColor','none', 'FaceLighting','gouraud')
-    % drawSphere(axH, appLM.IT(2,:),2.5, 'FaceColor','c', 'EdgeColor','none', 'FaceLighting','gouraud')
-    % textHandle=text(axH, appLM.IT(:,1), appLM.IT(:,2), appLM.IT(:,3), 'IT',...
-    %     'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
-    % [textHandle.HorizontalAlignment]=deal('left','right');
-    % % SIC
-    % drawSphere(axH, appLM.SIC(1,:),2.5, 'FaceColor',[.3 .4 .2], 'EdgeColor','none', 'FaceLighting','gouraud')
-    % drawSphere(axH, appLM.SIC(2,:),2.5, 'FaceColor',[.3 .4 .2], 'EdgeColor','none', 'FaceLighting','gouraud')
-    % textHandle=text(axH, appLM.SIC(:,1), appLM.SIC(:,2), appLM.SIC(:,3), 'SIC',...
-    %     'FontWeight','bold','FontSize',14, 'VerticalAlignment','bottom', 'Color','k');
-    % [textHandle.HorizontalAlignment]=deal('left','right');
-    % % IIT
-    % drawSphere(axH, appLM.IIT(1,:),2.5, 'FaceColor',[.5 0 .5], 'EdgeColor','none', 'FaceLighting','gouraud')
-    % drawSphere(axH, appLM.IIT(2,:),2.5, 'FaceColor',[.5 0 .5], 'EdgeColor','none', 'FaceLighting','gouraud')
-    % textHandle=text(axH, appLM.IIT(:,1), appLM.IIT(:,2), appLM.IIT(:,3), 'IIT',...
-    %     'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
-    % [textHandle.HorizontalAlignment]=deal('left','right');
+    % IT
+    drawSphere(axH, appLM.IT(1,:),2.5, 'FaceColor','c', 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.IT(2,:),2.5, 'FaceColor','c', 'EdgeColor','none', 'FaceLighting','gouraud')
+    textHandle=text(axH, appLM.IT(:,1), appLM.IT(:,2), appLM.IT(:,3), 'IT',...
+        'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
+    [textHandle.HorizontalAlignment]=deal('left','right');
+    % SIC
+    drawSphere(axH, appLM.SIC(1,:),2.5, 'FaceColor',[.3 .4 .2], 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.SIC(2,:),2.5, 'FaceColor',[.3 .4 .2], 'EdgeColor','none', 'FaceLighting','gouraud')
+    textHandle=text(axH, appLM.SIC(:,1), appLM.SIC(:,2), appLM.SIC(:,3), 'SIC',...
+        'FontWeight','bold','FontSize',14, 'VerticalAlignment','bottom', 'Color','k');
+    [textHandle.HorizontalAlignment]=deal('left','right');
+    % IIT
+    drawSphere(axH, appLM.IIT(1,:),2.5, 'FaceColor',[.5 0 .5], 'EdgeColor','none', 'FaceLighting','gouraud')
+    drawSphere(axH, appLM.IIT(2,:),2.5, 'FaceColor',[.5 0 .5], 'EdgeColor','none', 'FaceLighting','gouraud')
+    textHandle=text(axH, appLM.IIT(:,1), appLM.IIT(:,2), appLM.IIT(:,3), 'IIT',...
+        'FontWeight','bold','FontSize',14, 'VerticalAlignment','top', 'Color','k');
+    [textHandle.HorizontalAlignment]=deal('left','right');
     % SP
     drawSphere(axH, appLM.SP,2.5, 'FaceColor','m', 'EdgeColor','none', 'FaceLighting','gouraud')
     text(axH, appLM.SP(:,1), appLM.SP(:,2), appLM.SP(:,3), 'SP',...
