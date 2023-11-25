@@ -145,9 +145,9 @@ curvatureOptions.verb = 0;
 % algorithm won't work.
 curvature = abs(curvatureMax-curvatureMin);
 curvatureThreshold = 0.1; % Close to 0 [Beniere 2011].
-endCriteria = Inf; % See below
+endCriterion = Inf; % See below
 % The curvature threshold is reduced while endCriteria is above X.
-while curvatureThreshold > 0.06 && endCriteria>2.1
+while curvatureThreshold > 0.06 && endCriterion > 2.1
     % Vertices of flats
     flatsVerticesIdx = curvature<curvatureThreshold;
     % Faces with all three vertices part of flats
@@ -214,10 +214,19 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
         % Construct the sacral plane
         SacralPlane = fitPlane(flatsMesh.vertices);
         % Fit an ellipse to the sacral plateau and calculate a/b
-        fittedEllipse = fitEllipse3d(...
+        [fittedEllipse, ellipseTFM] = fitEllipse3d(...
             flatsMesh.vertices(unique(outline(flatsMesh.faces)),:),'visu',false);
-        % a/b of the fitted ellipse 
-        endCriteria=fittedEllipse(4)/fittedEllipse(5);
+        ellipseNormal = transformVector3d([0 0 1], ellipseTFM);
+        % z-direction of the 
+        if ellipseNormal(3) < 0 
+            ellipseNormal = -1 * ellipseNormal;
+        end
+        % y-direction of the ellipse normal must be positive
+        ELLIPSE_NORMAL_YDIR_THRESHOLD = 0.075;
+        if ellipseNormal(2) > ELLIPSE_NORMAL_YDIR_THRESHOLD
+            % a/b of the fitted ellipse
+            endCriterion = fittedEllipse(4)/fittedEllipse(5);
+        end
     end
     
     % Reduce the curvature threshold:
@@ -239,6 +248,8 @@ while curvatureThreshold > 0.06 && endCriteria>2.1
         patchProps.EdgeColor = 'k';
         if ~isempty(flatsMesh)
             debugHandle(3) = patch(flatsMesh,patchProps);
+            debugHandle(4) = drawEllipse3d(fittedEllipse);
+            debugHandle(5) = drawArrow3d(fittedEllipse(1:3), ellipseNormal*25, 'k');
         end
         delete(debugHandle)
     end
